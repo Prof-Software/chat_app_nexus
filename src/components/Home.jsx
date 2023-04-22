@@ -11,7 +11,7 @@ const Home = () => {
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("user"));
     if (!userData) {
-      history.push("/login"); // redirect to login if user data is not available
+      navigate("/login"); // redirect to login if user data is not available
     } else {
       const { userId } = userData;
       client
