@@ -23,7 +23,7 @@ const Home = () => {
         })
         .catch((error) => console.error(error));
     }
-  }, [history]);
+  }, [navigate]);
   return (
     <div className="h-screen w-screen flex bg-[#2F3136] text-white">
       <Sidebar />
