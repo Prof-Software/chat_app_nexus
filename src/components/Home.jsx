@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import { client } from "../client";
 import Sidebar from "./Sidebar";
 import Private from "./Private";
+import {useNavigate} from 'react-router-dom'
 
 const Home = () => {
   const [user, setUser] = useState({});
-  const history = useHistory();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("user"));
