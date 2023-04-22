@@ -1,25 +1,36 @@
-import logo from './logo.svg';
-import './App.css';
-
-function App() {
+import React, { useState } from 'react'
+import { Route, Routes, useNavigate } from 'react-router-dom'
+import Login from './components/Login'
+import Home from './components/Home'
+import { GoogleOAuthProvider } from '@react-oauth/google'
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+const App = () => {
+  const [theme, setTheme] = useState('')
+  const darkTheme = createTheme({
+    palette: {
+      mode: 'dark',
+    },
+  });
+  const switchtheme = () => {
+    if (theme === 'dark') {
+      setTheme('light')
+    } else {
+      setTheme('dark')
+    }
+  }
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    <GoogleOAuthProvider clientId={`${process.env.REACT_APP_GOOGLE_API_TOKEN}`}>
+      <ThemeProvider theme={darkTheme}>
+
+        <Routes>
+          <Route path='login' element={<Login />} />
+          <Route path='/*' element={<Home themeset={setTheme} />} />
+        </Routes>
+      </ThemeProvider>
+    </GoogleOAuthProvider>
+
+  )
 }
 
-export default App;
+export default App
