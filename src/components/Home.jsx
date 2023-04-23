@@ -3,6 +3,7 @@ import { client } from "../client";
 import Sidebar from "./Sidebar";
 import Private from "./Private";
 import {useNavigate} from 'react-router-dom'
+import MainChat from "./MainChat";
 
 const Home = () => {
   const [user, setUser] = useState({});
@@ -28,6 +29,7 @@ const Home = () => {
     <div className="h-screen w-screen flex bg-[#2F3136] text-white">
       <Sidebar />
       <Private user={user && user} />
+      <MainChat/>
     </div>
   );
 };

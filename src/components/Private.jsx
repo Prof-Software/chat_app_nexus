@@ -1,9 +1,11 @@
 import { Divider } from "@mui/material";
 import React from "react";
-import { AiOutlinePlus } from "react-icons/ai";
+import { AiFillSetting, AiOutlinePlus } from "react-icons/ai";
 import { FaUserFriends } from "react-icons/fa";
 import Svg from "./Svg";
 import { SiGuilded } from "react-icons/si";
+import { FaMicrophone } from "react-icons/fa";
+import { ImHeadphones } from "react-icons/im";
 
 const Private = ({ user }) => {
   return (
@@ -34,8 +36,8 @@ const Private = ({ user }) => {
           <Svg />
         </div>
       </div>
-      <div className="bg-[#232428] h-[52px] w-full px-4 p-2 flex">
-        <div className="flex hover:bg-[#ffffff0f] px-2 rounded-lg items-center justify-center">
+      <div className="bg-[#232428] h-[52px] w-full justify-between py-2 flex">
+        <div className="flex ml-1 hover:bg-[#ffffff0f] cursor-pointer px-2 rounded-lg items-center justify-center">
           <div className="bg-[#5865f2] w-[30px] h-[30px] my-2 flex items-center justify-center rounded-full">
             <SiGuilded />
           </div>
@@ -44,6 +46,17 @@ const Private = ({ user }) => {
             <p className="text-[13px] text-[#767676]">
               #{user?.userId?.slice(user?.userName.length + 1)}
             </p>
+          </div>
+        </div>
+        <div className="flex mr-1 ml-2 gap-3 hover:bg-[#ffffff0f] cursor-pointer px-2 rounded-lg items-center justify-center">
+          <div className="flex items-center text-[#838383] justify-center rounded-full">
+            <FaMicrophone fontSize={18}/>
+          </div>
+          <div className="flex items-center text-[#838383] justify-center rounded-full">
+            <ImHeadphones fontSize={18}/>
+          </div>
+          <div className="flex items-center text-[#838383] justify-center rounded-full">
+            <AiFillSetting fontSize={18}/>
           </div>
         </div>
       </div>
