@@ -61,8 +61,10 @@ const MainChat = () => {
               setActive("add");
             }}
             className={`flex ${
-              active === "add" ? "bg-[#2f3136] text-[#34aa5f] rounded-md"
-            :"text-[white]"} px-2 bg-[#248046] rounded-md  items-center gap-2 mx-3`}
+              active === "add"
+                ? "bg-[#2f3136] text-[#34aa5f] rounded-md"
+                : "text-[white]"
+            } px-2 bg-[#248046] rounded-md  items-center gap-2 mx-3`}
           >
             Add Friend
           </button>
@@ -93,7 +95,7 @@ const MainChat = () => {
                 onChange={(e) => {
                   setFrndreq(e.target.value);
                 }}
-                className="w-[90%] focus:border placeholder:font-sans focus:border-blue-400 outline-none my-2 bg-[#1e1f22] p-3 rounded-md"
+                className="w-[90%] focus:shadow placeholder:font-sans focus:shadow-blue-400 outline-none my-2 bg-[#1e1f22] p-3 rounded-md"
                 placeholder="Enter a Username#0000"
                 type="text"
                 name=""

@@ -112,6 +112,7 @@ const Login = () => {
     return date.toISOString().substring(0, 10);
   }
 
+
   const handleLoginSubmit = async (event) => {
     event.preventDefault();
 
@@ -190,7 +191,7 @@ const Login = () => {
         email: email,
         dateOfBirth: dob,
       };
-      localStorage.setItem("userData", JSON.stringify(userData));
+      localStorage.setItem("user", JSON.stringify(userData));
       navigate("/");
     });
   };
