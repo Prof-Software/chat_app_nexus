@@ -1,6 +1,11 @@
 import { Divider, Menu, MenuItem } from "@mui/material";
-import React, { useRef, useState } from "react";
-import { AiFillSetting, AiOutlinePlus } from "react-icons/ai";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  AiFillSetting,
+  AiOutlineLogout,
+  AiOutlinePlus,
+  AiOutlineRight,
+} from "react-icons/ai";
 import { FaUserFriends } from "react-icons/fa";
 import Svg from "./Svg";
 import { SiGuilded } from "react-icons/si";
@@ -10,20 +15,49 @@ import EditIcon from "@mui/icons-material/Edit";
 import CircleIcon from "@mui/icons-material/Circle";
 
 import moment from "moment";
+import { client } from "../client";
 const Private = ({ user }) => {
   const [anchorEl, setAnchorEl] = useState(null);
+  const [friends, setFriends] = useState([]);
 
+  useEffect(() => {
+    const fetchFriends = async () => {
+      const query = `*[_type == "friendRequest" && (sender._ref == "${user?._id}" || receiver._ref == "${user?._id}") && status == "accepted"] {
+        _id,
+        status,
+        sender->{
+          _id,
+          userName,
+          userId,
+          image,
+        },
+        receiver->{
+          _id,
+          userName,
+          userId,
+          image,
+        }
+      }`;
+      const acceptedRequests = await client.fetch(query);
+      setFriends(acceptedRequests);
+    };
+    fetchFriends();
+  }, [user?._id]);
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
-
+  console.log(friends);
   const handleClose = () => {
     setAnchorEl(null);
   };
+  function handleLogout() {
+    localStorage.removeItem("user");
+    window.location.href = "/login";
+  }
 
   return (
     <div className="w-[240px] bg-[#2b2d31] h-full flex flex-col justify-between">
-      <div className="flex flex-col">
+      <div className="flex flex-col w-[232px]">
         <div className="h-[48px] py-3 w-full  flex items-center justify-center">
           <input
             className="bg-[#1e1f22] placeholder:text-sm p-1 px-4 outline-none rounded-md"
@@ -45,8 +79,34 @@ const Private = ({ user }) => {
           </button>
           <AiOutlinePlus />
         </div>
-        <div className="text-[#313338] px-6">
-          <Svg />
+        <div className="text-[#313338] h-[428px] w-full px-2">
+          {friends?.length > 0 ? (
+            // Render the list of friends here
+            <div className=" w-full text-[gray] hover:text-[white] hover:bg-[#ffffff2d] px-3 p-2 cursor-pointer rounded-md">
+              {friends?.map((friend) => (
+                <div key={friend._id}>
+                  {friend.sender.userId === user?.userId ? (
+                    <div className="flex gap-3 items-center">
+                      <div className="bg-[#5865f2] text-white w-[30px] h-[30px] flex items-center justify-center rounded-full">
+                        <SiGuilded />
+                      </div>
+                      <p>{friend.receiver.userName}</p>
+                    </div>
+                  ) : (
+                    <div className="flex gap-3 items-center">
+                      <div className="bg-[#5865f2] text-white w-[30px] h-[30px] flex items-center justify-center rounded-full">
+                        <SiGuilded />
+                      </div>
+                      <p>{friend.sender.userName}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            // Render the Svg component here
+            <Svg />
+          )}
         </div>
       </div>
       <div className="bg-[#232428] h-[52px] w-full justify-between py-2 flex">
@@ -100,13 +160,23 @@ const Private = ({ user }) => {
                   </p>
                 </div>
                 <Divider />
-                <div className="hover:bg-[rgba(255,255,255,0.1)] hover:text-[gray] p-1 rounded-md transition-all px-3 text-green-400  my-2">
+                <div className="hover:bg-[rgba(255,255,255,0.1)] cursor-pointer items-center flex justify-between hover:text-[gray] p-1 rounded-md transition-all px-3 text-green-400  my-2">
                   <div className="flex items-center gap-3">
                     <CircleIcon fontSize="15px" />
                     <p className="text-white">Online</p>
                   </div>
+                  <AiOutlineRight className="text-white" />
                 </div>
-                <Divider/>
+                <Divider />
+                <div
+                  onClick={handleLogout}
+                  className="hover:bg-[rgba(255,255,255,0.1)] cursor-pointer items-center flex justify-between p-1 rounded-md transition-all px-3 my-2"
+                >
+                  <div className="flex items-center gap-3">
+                    <AiOutlineLogout fontSize="15px" />
+                    <p className="text-white">Logout</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

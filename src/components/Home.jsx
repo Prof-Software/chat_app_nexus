@@ -8,7 +8,7 @@ import MainChat from "./MainChat";
 const Home = () => {
   const [user, setUser] = useState({});
   const navigate = useNavigate();
-
+  const [tab, setTab] = useState("add")
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("user"));
     if (!userData) {
@@ -29,7 +29,7 @@ const Home = () => {
     <div className="h-screen w-screen flex bg-[#2F3136] text-white">
       <Sidebar />
       <Private user={user && user} />
-      <MainChat/>
+      <MainChat user={user && user} tab={tab} setTab={setTab}/>
     </div>
   );
 };

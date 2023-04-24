@@ -25,5 +25,9 @@ body::-webkit-scrollbar {
 .css-6hp17o-MuiList-root-MuiMenu-list{
   padding-top: 0!important;
   padding-bottom: 0!important;
-  border-radius: 15px!important;
+  border-radius: 20px!important;
+}
+.css-at26bj-MuiPaper-root-MuiMenu-paper-MuiPopover-paper{
+  border-radius: 20px!important;
+
 }
