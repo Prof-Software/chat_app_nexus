@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Divider, IconButton } from "@mui/material";
 import { FaUserFriends } from "react-icons/fa";
 import { IoMdHelpCircle } from "react-icons/io";
+import { BsFillChatRightFill } from "react-icons/bs";
 import { RiChatNewFill, RiChatNewLine } from "react-icons/ri";
 import { MdAllInbox, MdInbox } from "react-icons/md";
 import { client } from "../client";
@@ -11,9 +12,11 @@ import CloseIcon from "@mui/icons-material/Close";
 import {
   AiOutlineCheck,
   AiOutlineClose,
+  AiOutlineMore,
   AiOutlineSearch,
 } from "react-icons/ai";
 import { SiGuilded } from "react-icons/si";
+import { FiMoreVertical } from "react-icons/fi";
 import moment from "moment";
 const MainChat = ({ user, tab, setTab }) => {
   const [active, setActive] = useState("");
@@ -22,9 +25,37 @@ const MainChat = ({ user, tab, setTab }) => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
   const [friendRequests, setFriendRequests] = useState([]);
-  const [friends, setFriends] = useState([])
+  const [friends, setFriends] = useState([]);
+
+  useEffect(() => {
+    const fetchFriends = async () => {
+      const query = `*[_type == "friendRequest" && (sender._ref == "${user?._id}" || receiver._ref == "${user?._id}") && status == "accepted"] {
+        _id,
+        status,
+        sender->{
+          _id,
+          userName,
+          userId,
+          image,
+        },
+        receiver->{
+          _id,
+          userName,
+          userId,
+          image,
+        }
+      }`;
+      const acceptedRequests = await client.fetch(query);
+      setFriends(acceptedRequests);
+    };
+    fetchFriends();
+  }, [user?._id]);
+
   const handleOnline = () => {};
-  const handleAll = () => {};
+  const handleAll = () => {
+    setActive("all");
+    setTab("all");
+  };
   const handlePending = () => {
     setActive("pending");
     setTab("pending");
@@ -82,15 +113,15 @@ const MainChat = ({ user, tab, setTab }) => {
       // Send a PATCH request to update the friend request status
       const response = await client
         .patch(requestId)
-        .set({ status: 'accepted' })
+        .set({ status: "accepted" })
         .commit();
-        setSnackbarMessage("Friend request Accepted");
-        setSnackbarOpen(true);
+      setSnackbarMessage("Friend request Accepted");
+      setSnackbarOpen(true);
       // Update the friend requests state to remove the accepted request
       setFriendRequests((prevRequests) =>
         prevRequests.filter((request) => request._id !== requestId)
       );
-  
+
       // Add the accepted friend to the friends state
       // setFriends((prevFriends) => [
       //   ...prevFriends,
@@ -99,7 +130,7 @@ const MainChat = ({ user, tab, setTab }) => {
       //     : response.result.sender,
       // ]);
     } catch (error) {
-      console.error('Failed to accept friend request:', error.message);
+      console.error("Failed to accept friend request:", error.message);
     }
   };
 
@@ -154,6 +185,7 @@ const MainChat = ({ user, tab, setTab }) => {
         setSnackbarOpen(true);
       });
   };
+  console.log(friends)
 
   const action = (
     <React.Fragment>
@@ -194,11 +226,9 @@ const MainChat = ({ user, tab, setTab }) => {
             Online
           </button>
           <button
-            onClick={() => {
-              setActive("All");
-            }}
+            onClick={handleAll}
             className={`flex ${
-              active === "All" && "bg-[#ffffff20] text-white rounded-md"
+              tab === "all" && "bg-[#ffffff20] text-white rounded-md"
             } hover:bg-[#ffffff0d] px-2 text-[#828282] items-center gap-2 mx-3`}
           >
             All
@@ -206,7 +236,7 @@ const MainChat = ({ user, tab, setTab }) => {
           <button
             onClick={handlePending}
             className={`flex ${
-              active === "pending" && "bg-[#ffffff20] text-white rounded-md"
+              tab === "pending" && "bg-[#ffffff20] text-white rounded-md"
             } hover:bg-[#ffffff0d] px-2 text-[#828282] items-center gap-2 mx-3`}
           >
             Pending
@@ -224,7 +254,7 @@ const MainChat = ({ user, tab, setTab }) => {
           <button
             onClick={handleAdd}
             className={`flex ${
-              active === "add"
+              tab === "add"
                 ? "bg-[#2f3136] text-[#34aa5f] rounded-md"
                 : "text-[white]"
             } px-2 bg-[#248046] rounded-md  items-center gap-2 mx-3`}
@@ -279,6 +309,104 @@ const MainChat = ({ user, tab, setTab }) => {
             <div></div>
           </div>
         )}
+        {tab === "all" && (
+          <div className="flex flex-col w-[70%]">
+            <div className="w-full p-6">
+              <div className="relative">
+                <input
+                  className="w-[100%] focus:shadow placeholder:font-sans focus:shadow-blue-400 outline-none my-2 bg-[#1e1f22] px-2 p-[0.28rem] rounded-md"
+                  placeholder="Search"
+                  type="text"
+                  name=""
+                  id=""
+                />
+                <button
+                  className={`text-[13px] px-4 outline-none ${
+                    !frndreq && "opacity-40"
+                  } absolute top-[13%] right-[0.5%] p-[0.47rem] rounded-md`}
+                >
+                  <AiOutlineSearch fontSize={20} />
+                </button>
+              </div>
+
+              <div className="mt-6">
+                <div className="">
+                  <div className=" px-5">
+                    <h3 className="text-[12px] mb-2 text-[#b4b4b4]">
+                      ALL FRIENDS
+                    </h3>
+                  </div>
+
+                  <Divider />
+                  <div className="">
+                    {friends?.map((friend) => (
+                      <div key={friend._id}>
+                        {friend.receiver.userId === user?.userId ? (
+                          <div className="flex items-center gap-4 justify-between hover:bg-[#ffffff2e] py-2 px-4 rounded-lg">
+                            <div className="flex items-center gap-4">
+                              <div className="h-[32px] w-[32px] flex items-center justify-center bg-[#5865f2] rounded-full">
+                                <SiGuilded />
+                              </div>
+                              <div>
+                                <p>{friend.sender.userName}</p>
+                                <p className="text-[12px] text-[#9a9a9a]">
+                                  Offline
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex gap-3">
+                              <button
+                                // onClick={() => cancelFriendRequest(request)}
+                                className="bg-[#1b1b1b] p-2 flex items-center justify-center rounded-full hover:bg-[#1b1b1b76]"
+                              >
+                                <BsFillChatRightFill fontSize={17} />
+                              </button>
+                              <button
+                                // onClick={() => cancelFriendRequest(request)}
+                                className="bg-[#1b1b1b] p-2 flex items-center justify-center rounded-full hover:bg-[#1b1b1b76]"
+                              >
+                                <FiMoreVertical fontSize={17} />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-4 justify-between hover:bg-[#ffffff2e] py-2 px-4 rounded-lg">
+                            <div className="flex items-center gap-4">
+                              <div className="h-[32px] w-[32px] flex items-center justify-center bg-[#5865f2] rounded-full">
+                                <SiGuilded />
+                              </div>
+                              <div>
+                                <p>{friend.receiver.userName}</p>
+                                <p className="text-[12px] text-[#9a9a9a]">
+                                  Offline
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex gap-3">
+                              <button
+                                //  onClick={() => cancelFriendRequest(request)}
+                                className="bg-[#1b1b1b] p-2 flex items-center justify-center rounded-full hover:bg-[#1b1b1b76]"
+                              >
+                                <BsFillChatRightFill fontSize={17} />
+                              </button>
+                              <button
+                                //  onClick={() => cancelFriendRequest(request)}
+                                className="bg-[#1b1b1b] p-2 flex items-center justify-center rounded-full hover:bg-[#1b1b1b76]"
+                              >
+                                <FiMoreVertical fontSize={17} />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div></div>
+          </div>
+        )}
         {tab === "pending" && (
           <div className="flex flex-col w-[70%]">
             <div className="w-full p-6">
@@ -291,7 +419,6 @@ const MainChat = ({ user, tab, setTab }) => {
                   id=""
                 />
                 <button
-                  onClick={sendFriendRequest}
                   className={`text-[13px] px-4 outline-none ${
                     !frndreq && "opacity-40"
                   } absolute top-[13%] right-[0.5%] p-[0.47rem] rounded-md`}
@@ -301,8 +428,10 @@ const MainChat = ({ user, tab, setTab }) => {
               </div>
 
               <div className="mt-6">
-                <div className=" px-5">
-                  <h3 className="text-[12px] mb-2 text-[#b4b4b4]">PENDING</h3>
+                <div className="">
+                  <div className=" px-5">
+                    <h3 className="text-[12px] mb-2 text-[#b4b4b4]">PENDING</h3>
+                  </div>
                   <Divider />
                   <div className="mt-3">
                     {friendRequests.map((request) => (

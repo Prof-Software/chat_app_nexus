@@ -26,7 +26,7 @@ const Home = () => {
     }
   }, [navigate]);
   return (
-    <div className="h-screen w-screen flex bg-[#2F3136] text-white">
+    <div className="h-screen w-screen flex bg-[#313338] text-white">
       <Sidebar />
       <Private user={user && user} />
       <MainChat user={user && user} tab={tab} setTab={setTab}/>
