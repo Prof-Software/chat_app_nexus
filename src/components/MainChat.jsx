@@ -185,7 +185,7 @@ const MainChat = ({ user, tab, setTab }) => {
         setSnackbarOpen(true);
       });
   };
-  console.log(friends)
+  
 
   const action = (
     <React.Fragment>
