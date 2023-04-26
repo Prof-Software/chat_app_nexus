@@ -45,22 +45,6 @@ const Private = ({ user }) => {
     setOpen(true);
   };
 
-  const handleClickClose = () => {
-    setOpen(false);
-  };
-  const backdrop = {
-    visible: { opacity: 1 },
-    hidden: { opacity: 0 },
-  };
-
-  const modal = {
-    hidden: { y: "-50%", opacity: 0 },
-    visible: {
-      y: "0%",
-      opacity: 1,
-      transition: { delay: 0.2 },
-    },
-  };
   useEffect(() => {
     const fetchFriends = async () => {
       const query = `*[_type == "friendRequest" && (sender._ref == "${user?._id}" || receiver._ref == "${user?._id}") && status == "accepted"] {
@@ -247,7 +231,7 @@ const Private = ({ user }) => {
                 onAnimationComplete={handleAnimationComplete}
               >
                 
-                  <Settings open={open} tab={"userprofile"} tabnum={2} close={handleAniClose}/>
+                  <Settings user={user&&user} open={open} tab={"userprofile"} tabnum={2} close={handleAniClose}/>
               </motion.div>
             )}
           </AnimatePresence>
