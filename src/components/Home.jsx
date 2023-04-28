@@ -25,6 +25,7 @@ const Home = () => {
         .catch((error) => console.error(error));
     }
   }, [navigate]);
+  console.log(user)
   return (
     <div className="h-screen w-screen flex bg-[#313338] text-white">
       <Sidebar />
