@@ -23,12 +23,14 @@ const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-const Private = ({ user }) => {
+const Private = ({ user, setUser,chatting,setChatting }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [friends, setFriends] = useState([]);
   const [hover, setHover] = useState(false);
   const [open, setOpen] = React.useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [color, setColor] = useState(user?.banner);
+  console.log(user?.banner);
 
   const handleAnimationComplete = () => {
     setIsAnimating(false);
@@ -78,6 +80,7 @@ const Private = ({ user }) => {
     localStorage.removeItem("user");
     window.location.href = "/login";
   }
+  console.log(friends)
 
   return (
     <div className="w-[240px] bg-[#2b2d31] h-full flex flex-col justify-between">
@@ -108,16 +111,20 @@ const Private = ({ user }) => {
             // Render the list of friends here
             <div className=" w-full">
               {friends?.map((friend) => (
-                <div className=" text-[gray] hover:text-[white] hover:bg-[#ffffff2d] px-3 p-2 cursor-pointer rounded-md" key={friend._id}>
+                <div
+                  className=" text-[gray] hover:text-[white] hover:bg-[#ffffff2d] px-3 p-2 cursor-pointer rounded-md"
+                  
+                  key={friend._id}
+                >
                   {friend.sender.userId === user?.userId ? (
-                    <div className="flex gap-3 items-center">
-                      <div className="bg-[#5865f2] text-white w-[30px] h-[30px] flex items-center justify-center rounded-full">
+                    <div onClick={()=>{setChatting(friend.receiver)}} className="flex gap-3 items-center">
+                      <div className="bg-[#5865f2]  text-white w-[30px] h-[30px] flex items-center justify-center rounded-full">
                         <SiGuilded />
                       </div>
                       <p>{friend.receiver.userName}</p>
                     </div>
                   ) : (
-                    <div className="flex gap-3 items-center">
+                    <div onClick={()=>{setChatting(friend.sender)}} className="flex gap-3 items-center">
                       <div className="bg-[#5865f2] text-white w-[30px] h-[30px] flex items-center justify-center rounded-full">
                         <SiGuilded />
                       </div>
@@ -138,9 +145,22 @@ const Private = ({ user }) => {
           onClick={handleClick}
           className="flex ml-1 hover:bg-[#ffffff0f] cursor-pointer px-2 rounded-lg items-center justify-center"
         >
-          <div className="bg-[#5865f2] w-[30px] h-[30px] my-2 flex items-center justify-center rounded-full">
-            <SiGuilded />
+          <div
+            className={`${
+              user?.image ? "bg-black" : "bg-[#5865f2]"
+            }  w-[30px] h-[30px] my-2 flex items-center justify-center rounded-full`}
+          >
+            {user?.image ? (
+              <img
+                className="h-[30px] rounded-full w-[30px]"
+                src={user?.image}
+                alt=""
+              />
+            ) : (
+              <SiGuilded fontSize={18} className="text-white" />
+            )}
           </div>
+
           <div className="p-2  text-sm">
             <h3>{user?.userName}</h3>
             <p className="text-[13px] text-[#767676]">
@@ -161,11 +181,22 @@ const Private = ({ user }) => {
           >
             <div className="w-[340px] bg-[#232428] rounded-[15px]">
               <div className="relative">
-                <div className="h-[60px] bg-pink-300 w-full"></div>
+                <div
+                  className={`h-[60px] flex items-center justify-center w-full`}
+                  style={{ backgroundColor: user?.banner }}
+                ></div>
                 {/* {user.image} */}
-                <div className="bg-[#5865f2] border-[6px] border-[#232428] absolute top-[10px] left-[20px] w-[90px] h-[90px] my-2 flex items-center justify-center rounded-full">
-                  <SiGuilded fontSize={40} className="mt-2" />
-                </div>
+                {user?.image ? (
+                  <img
+                    src={user?.image}
+                    className="bg-[#000000] border-[6px] border-[#232428] absolute top-[10px] left-[20px] w-[90px] h-[90px] my-2 flex items-center justify-center rounded-full"
+                  />
+                ) : (
+                  <div className="bg-[#5865f2] border-[6px] border-[#232428] absolute top-[10px] left-[20px] w-[90px] h-[90px] my-2 flex items-center justify-center rounded-full">
+                    <SiGuilded fontSize={40} className="mt-2" />
+                  </div>
+                )}
+
                 <button
                   onClick={handleClickOpen}
                   className="absolute top-[11%] right-[4%] bg-[rgba(0,0,0,0.2)] hover:bg-[rgba(0,0,0,0.48)] transition-all p-1 rounded-full flex items-center justify-center"
@@ -179,6 +210,17 @@ const Private = ({ user }) => {
                     <h1 className="text-xl">{user?.userId}</h1>
                   </div>
                   <Divider />
+                  {user?.about?.length !== 0 && (
+                    <div className="my-2">
+                      <p className="text-[13px] uppercase font-sans font-bold">
+                      About Me
+                    </p>
+                      <div className="text-[13px] text-[#a2a2a2] mb-3">
+                        {user?.about ? user?.about : "You dont have any about"}
+                      </div>
+                      <Divider/>
+                    </div>
+                  )}
                   <div className="flex flex-col  my-2">
                     <p className="text-[13px] uppercase font-sans font-bold">
                       Nexus Member Since
@@ -230,8 +272,14 @@ const Private = ({ user }) => {
                 exit={{ opacity: 0, scale: 0.5 }}
                 onAnimationComplete={handleAnimationComplete}
               >
-                
-                  <Settings user={user&&user} open={open} tab={"userprofile"} tabnum={2} close={handleAniClose}/>
+                <Settings
+                  setUser={setUser}
+                  user={user && user}
+                  open={open}
+                  tab={"userprofile"}
+                  tabnum={2}
+                  close={handleAniClose}
+                />
               </motion.div>
             )}
           </AnimatePresence>

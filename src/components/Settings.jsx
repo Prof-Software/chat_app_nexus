@@ -77,7 +77,7 @@ function a11yProps(index) {
     "aria-controls": `simple-tabpanel-${index}`,
   };
 }
-function TabContent({ activeTab, user, setActiveTab, timeElapsed }) {
+function TabContent({ activeTab, user, setActiveTab, timeElapsed, setUser }) {
   const username = user?.userId?.split("#")[0];
   const discriminator = user?.userId?.split("#")[1];
   const [localPart, domain] = user?.email?.split("@");
@@ -92,7 +92,7 @@ function TabContent({ activeTab, user, setActiveTab, timeElapsed }) {
   const [file, setFile] = useState(null);
   const [imageUrl, setImageUrl] = useState(null);
   const [title, setTitle] = useState("");
-  const [about, setAbout] = useState("");
+  const [about, setAbout] = useState(user?.about);
   const [loading, setLoading] = useState(false);
   const [destination, setDestination] = useState();
   const [fields, setFields] = useState();
@@ -101,7 +101,6 @@ function TabContent({ activeTab, user, setActiveTab, timeElapsed }) {
   const [input, setInput] = useState(false);
   const [newName, setNewName] = useState("");
   const [newId, setNewId] = useState("");
-  const [newAbout, setNewAbout] = useState("");
   const [profileImage, setProfileImage] = useState(null);
   const [profileImageUrl, setProfileImageUrl] = useState("");
   const [coverImage, setCoverImage] = useState(null);
@@ -114,7 +113,30 @@ function TabContent({ activeTab, user, setActiveTab, timeElapsed }) {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [croppedImage, setCroppedImage] = useState(null);
   const [showNotification, setShowNotification] = useState(false);
-  const [color, setColor] = useState("#000000");
+  const [color, setColor] = useState(user?.banner || "#000000");
+  const [remainingChars, setRemainingChars] = useState(190);
+
+  const handleAbout = (event) => {
+    const newValue = event.target.value;
+    setAbout(newValue);
+    setShowNotification(true);
+    setRemainingChars(190 - newValue.length);
+  };
+  useEffect(() => {
+    if (about === user?.about) {
+      setShowNotification(false);
+    } else {
+      setShowNotification(true);
+    }
+  }, [about]);
+  useEffect(() => {
+    if (color === user?.banner) {
+      setShowNotification(false);
+    } else {
+      setShowNotification(true);
+    }
+  }, [color]);
+
   const [isOpen, setIsOpen] = useState(false);
   function handleChangeColor(newColor) {
     setColor(newColor.hex);
@@ -163,6 +185,8 @@ function TabContent({ activeTab, user, setActiveTab, timeElapsed }) {
   const handleResetChanges = () => {
     // Reset changes made to profile picture
     setCroppedImage(null);
+    setAbout(user?.about);
+    setColor(user?.banner);
     setShowNotification(false);
   };
 
@@ -190,11 +214,23 @@ function TabContent({ activeTab, user, setActiveTab, timeElapsed }) {
         .patch(id)
         .set({ userName: newName })
         .commit()
+        .then(() => {});
+    }
+    if (color) {
+      setLoading(true);
+      client
+        .patch(id)
+        .set({ banner: color })
+        .commit()
         .then(() => {
-          window.location.reload();
+          setIsOpen(false);
+          setLoading(false);
+          setUser({ ...user, banner: color });
+          setShowNotification(false);
         });
     }
     if (croppedImage) {
+      setLoading(true);
       const response = await fetch(croppedImage);
       const blob = await response.blob();
       const filename = "cropped-image.png";
@@ -205,10 +241,15 @@ function TabContent({ activeTab, user, setActiveTab, timeElapsed }) {
       const imageUrl = uploadedImage.url;
 
       client
-        .patch(id)
+        .patch(user._id)
         .set({ image: imageUrl })
         .commit()
-        .then((result) => console.log("User image updated"))
+        .then((result) => {
+          console.log("User image updated");
+          setUser({ ...user, image: imageUrl });
+          setLoading(false);
+          setShowNotification(false);
+        })
         .catch((error) => console.error("Error updating user image:", error));
     }
     if (coverImage) {
@@ -225,13 +266,16 @@ function TabContent({ activeTab, user, setActiveTab, timeElapsed }) {
           window.location.reload();
         });
     }
-    if (newAbout) {
+    if (about) {
+      setLoading(true);
       client
         .patch(id)
-        .setIfMissing({ about: newAbout })
+        .set({ about: about })
         .commit()
         .then(() => {
-          window.location.reload();
+          setLoading(false);
+          setUser({ ...user, about: about });
+          setShowNotification(false);
         });
     }
     if (newId) {
@@ -285,10 +329,20 @@ function TabContent({ activeTab, user, setActiveTab, timeElapsed }) {
         <div className="p-6 ml-3 pt-[4.2rem]">
           <h3 className="text-lg">My Account</h3>
           <div className="w-[660px] relative rounded-md mt-4 h-[398px] bg-[#1e1f22]">
-            <div className="w-full h-[100px] rounded-t-md bg-[#b181bb]"></div>
-            <div className="bg-[#5865f2] absolute top-[16%] left-[4%] border-[6px] border-[#1e1f22] w-[100px] h-[100px] my-2 flex items-center justify-center rounded-full">
-              <SiGuilded className="mt-2" fontSize={55} />
-            </div>
+            <div
+              className={`w-full h-[100px] rounded-t-md`}
+              style={{ backgroundColor: color }}
+            ></div>
+            {user?.image ? (
+              <img
+                src={user?.image}
+                className="bg-[#000000] absolute top-[16%] left-[4%] border-[6px] border-[#1e1f22] w-[100px] h-[100px] my-2 flex items-center justify-center rounded-full"
+              />
+            ) : (
+              <div className="bg-[#5865f2] absolute top-[16%] left-[4%] border-[6px] border-[#1e1f22] w-[100px] h-[100px] my-2 flex items-center justify-center rounded-full">
+                <SiGuilded className="mt-2" fontSize={55} />
+              </div>
+            )}
             <div className="ml-[8.7rem] flex items-center justify-between">
               <h2 className="text-xl mt-3 flex items-center">
                 <span className="text-2xl" style={{ color: "white" }}>
@@ -382,242 +436,278 @@ function TabContent({ activeTab, user, setActiveTab, timeElapsed }) {
               </Tabs>
             </Box>
             <TabPanel value={value} index={0}>
-              <div className="mt-4 gap-5 flex">
-                <div className="w-[50%]">
-                  <div className="flex flex-col mb-4">
-                    <div className="text-[#bbbbbb] text-[13px] font-sans font-bold">
-                      AVATAR
-                    </div>
-                    <button
-                      onClick={() => {
-                        setOpen(!open);
-                      }}
-                      className="text-[13px] outline-none mr-5 w-[120px] p-1 px-3 bg-[#5865f2] mt-3 rounded-md"
-                    >
-                      Change Avatar
-                    </button>
-                    <AnimatePresence>
-                      {open && (
-                        <motion.div
-                          className="fixed h-screen w-screen top-0 left-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-                          initial={{ opacity: 0, scale: 0.5 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.5 }}
-                          onAnimationComplete={handleAnimationComplete}
-                          onClick={handleAniClose}
-                        >
+              <div className="mt-4 gap-5 flex flex-col">
+                <div className="flex gap-5 w-full">
+                  <div className="w-[50%]">
+                    <div className="flex flex-col mb-4">
+                      <div className="text-[#bbbbbb] text-[13px] font-sans font-bold">
+                        AVATAR
+                      </div>
+                      <button
+                        onClick={() => {
+                          setOpen(!open);
+                        }}
+                        className="text-[13px] outline-none mr-5 w-[120px] p-1 px-3 bg-[#5865f2] mt-3 rounded-md"
+                      >
+                        Change Avatar
+                      </button>
+                      <AnimatePresence>
+                        {open && (
                           <motion.div
-                            className="bg-[#313338] p-4 pb-10 rounded-md items-center flex-col flex"
+                            className="fixed h-screen w-screen top-0 left-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
                             initial={{ opacity: 0, scale: 0.5 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.5 }}
-                            onClick={(e) => e.stopPropagation()}
+                            onAnimationComplete={handleAnimationComplete}
+                            onClick={handleAniClose}
                           >
-                            <div className="flex w-full items-center justify-between mb-4 text-lg">
-                              <div> Select An Image </div>
-                              <IconButton onClick={handleAniClose}>
-                                <AiOutlineClose />
-                              </IconButton>
-                            </div>
-                            <div className=" flex gap-4">
-                              <div className="h-[192px] relative text-[#bbbbbb] hover:text-[white] transition-all flex flex-col items-center justify-center bg-[#232428] w-[196px]">
-                                <input
-                                  onChange={handleImageChange}
-                                  type="file"
-                                  className="absolute top-0 left-0 h-full w-full opacity-0 cursor-pointer"
-                                />
-                                <div className="h-[128px] text-white flex items-center justify-center w-[128px] rounded-full bg-[#5865f2]">
-                                  <AddPhotoAlternateIcon
-                                    className="ml-2"
-                                    fontSize="large"
+                            <motion.div
+                              className="bg-[#313338] p-4 pb-10 rounded-md items-center flex-col flex"
+                              initial={{ opacity: 0, scale: 0.5 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.5 }}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="flex w-full items-center justify-between mb-4 text-lg">
+                                <div> Select An Image </div>
+                                <IconButton onClick={handleAniClose}>
+                                  <AiOutlineClose />
+                                </IconButton>
+                              </div>
+                              <div className=" flex gap-4">
+                                <div className="h-[192px] relative text-[#bbbbbb] hover:text-[white] transition-all flex flex-col items-center justify-center bg-[#232428] w-[196px]">
+                                  <input
+                                    onChange={handleImageChange}
+                                    type="file"
+                                    className="absolute top-0 left-0 h-full w-full opacity-0 cursor-pointer"
                                   />
+                                  <div className="h-[128px] text-white flex items-center justify-center w-[128px] rounded-full bg-[#5865f2]">
+                                    <AddPhotoAlternateIcon
+                                      className="ml-2"
+                                      fontSize="large"
+                                    />
+                                  </div>
+                                  <div className=" text-[15px] mt-3 font-sans font-bold">
+                                    Upload Image
+                                  </div>
                                 </div>
-                                <div className=" text-[15px] mt-3 font-sans font-bold">
-                                  Upload Image
+                                <AnimatePresence>
+                                  {imageSrc && (
+                                    <motion.div
+                                      className="fixed h-screen w-screen top-0 left-0 z-50 flex items-center justify-center bg-black bg-opacity-60"
+                                      initial={{ opacity: 0 }}
+                                      animate={{ opacity: 1 }}
+                                      exit={{ opacity: 0 }}
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <div className=" bg-[#313338]  p-3">
+                                        <div className="mb-3 text-lg">
+                                          Edit Image
+                                        </div>
+                                        <div className="flex w-[500px] bg-[#3e3e3e] rounded-md  h-[400px] relative flex-col gap-3">
+                                          <Cropper
+                                            className="object-cover"
+                                            image={imageSrc}
+                                            crop={crop}
+                                            zoom={zoom}
+                                            aspect={3 / 3}
+                                            onCropChange={setCrop}
+                                            onCropComplete={onCropComplete}
+                                            onZoomChange={setZoom}
+                                            cropShape="round"
+                                            showGrid={false}
+                                            zoomSpeed={3}
+                                          />
+                                        </div>
+                                        <div className="w-full flex gap-5 p-3 mt-3 items-center">
+                                          <BsImageFill fontSize={24} />
+                                          <Slider
+                                            value={zoom}
+                                            min={1}
+                                            max={3}
+                                            step={0.1}
+                                            onChange={(e, zoom) =>
+                                              setZoom(zoom)
+                                            }
+                                          />
+                                          <BsImageFill fontSize={35} />
+                                        </div>
+                                        <Divider />
+                                        <div className="w-full mt-3 flex justify-between">
+                                          <button
+                                            className="text-sm p-1 px-2 rounded-md"
+                                            onClick={cancelImage}
+                                          >
+                                            Cancel
+                                          </button>
+                                          <button
+                                            className="text-sm bg-[#5865f2] p-1 px-2 rounded-md"
+                                            onClick={showCroppedImage}
+                                          >
+                                            Apply
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                                <div className="h-[192px] text-[#bbbbbb] hover:text-[white] transition-all flex flex-col items-center justify-center bg-[#232428] w-[196px]">
+                                  <div className="h-[128px] text-white flex items-center justify-center w-[128px] rounded-full bg-[#5865f2]">
+                                    GIF
+                                  </div>
+                                  <div className=" text-[15px] mt-3 font-sans font-bold">
+                                    Choose GIF
+                                  </div>
                                 </div>
                               </div>
-                              <AnimatePresence>
-                                {imageSrc && (
-                                  <motion.div
-                                    className="fixed h-screen w-screen top-0 left-0 z-50 flex items-center justify-center bg-black bg-opacity-60"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <div className=" bg-[#313338]  p-3">
-                                      <div className="mb-3 text-lg">
-                                        Edit Image
-                                      </div>
-                                      <div className="flex w-[500px] bg-[#3e3e3e] rounded-md  h-[400px] relative flex-col gap-3">
-                                        <Cropper
-                                          className="object-cover"
-                                          image={imageSrc}
-                                          crop={crop}
-                                          zoom={zoom}
-                                          aspect={3 / 3}
-                                          onCropChange={setCrop}
-                                          onCropComplete={onCropComplete}
-                                          onZoomChange={setZoom}
-                                          cropShape="round"
-                                          showGrid={false}
-                                          zoomSpeed={3}
-                                        />
-                                      </div>
-                                      <div className="w-full flex gap-5 p-3 mt-3 items-center">
-                                        <BsImageFill fontSize={24} />
-                                        <Slider
-                                          value={zoom}
-                                          min={1}
-                                          max={3}
-                                          step={0.1}
-                                          onChange={(e, zoom) => setZoom(zoom)}
-                                        />
-                                        <BsImageFill fontSize={35} />
-                                      </div>
-                                      <Divider />
-                                      <div className="w-full mt-3 flex justify-between">
-                                        <button
-                                          className="text-sm p-1 px-2 rounded-md"
-                                          onClick={cancelImage}
-                                        >
-                                          Cancel
-                                        </button>
-                                        <button
-                                          className="text-sm bg-[#5865f2] p-1 px-2 rounded-md"
-                                          onClick={showCroppedImage}
-                                        >
-                                          Apply
-                                        </button>
-                                      </div>
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                              <div className="h-[192px] text-[#bbbbbb] hover:text-[white] transition-all flex flex-col items-center justify-center bg-[#232428] w-[196px]">
-                                <div className="h-[128px] text-white flex items-center justify-center w-[128px] rounded-full bg-[#5865f2]">
-                                  GIF
-                                </div>
-                                <div className=" text-[15px] mt-3 font-sans font-bold">
-                                  Choose GIF
-                                </div>
-                              </div>
-                            </div>
+                            </motion.div>
                           </motion.div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                  <Divider />
-                  <div className="mb-6"></div>
-                  <div className="mb-4 mt-4 premiumFeatureBorder">
-                    <div className="flex flex-col premium mt-4">
-                      <div className="text-[#bbbbbb] flex items-center gap-2 text-base">
-                        Avatar Decoration
-                        <Boost />
-                      </div>
-                      <div className="text-[#bbbbbb] flex items-center gap-2 text-[13px] font-sans">
-                        Available on Turbo through 5/10
-                      </div>
-                      <button className="text-[13px] text-center outline-none mr-5 w-full p-3 px-4 bg-[#5865f2] mt-3 rounded-md">
-                        Change Decoration
-                      </button>
+                        )}
+                      </AnimatePresence>
                     </div>
-                  </div>
-                  <div className="mt-3"></div>
-                  <Divider />
-                  <div className="py-3 relative w-full">
-                    <div className="text-[#bbbbbb] mb-2 text-[13px] font-sans font-bold">
-                      Banner Color
+                    <Divider />
+                    <div className="mb-6"></div>
+                    <div className="mb-4 mt-4 premiumFeatureBorder">
+                      <div className="flex flex-col premium mt-4">
+                        <div className="text-[#bbbbbb] flex items-center gap-2 text-base">
+                          Avatar Decoration
+                          <Boost />
+                        </div>
+                        <div className="text-[#bbbbbb] flex items-center gap-2 text-[13px] font-sans">
+                          Available on Turbo through 5/10
+                        </div>
+                        <button className="text-[13px] text-center outline-none mr-5 w-full p-3 px-4 bg-[#5865f2] mt-3 rounded-md">
+                          Change Decoration
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      className="w-[67px] h-[48px] rounded-md"
-                      onClick={handleOpen}
-                      style={{ backgroundColor: color }}
-                    />
-                    <div className="absolute z-50 top-0 right-0">
-                      {isOpen && (
-                        <SketchPicker
-                          className=""
-                          color={color}
-                          onChange={handleChangeColor}
-                        />
-                      )}
+                    <div className="mt-3"></div>
+                    <Divider />
+                    <div className="py-3 relative w-full my-3">
+                      <div className="text-[#bbbbbb] mb-2 text-[13px] font-sans font-bold">
+                        Banner Color
+                      </div>
+                      <button
+                        className="w-[67px] h-[48px] rounded-md"
+                        onClick={handleOpen}
+                        style={{ backgroundColor: color }}
+                      />
+                      <div className="absolute z-50 top-0 right-0">
+                        {isOpen && (
+                          <SketchPicker
+                            className=""
+                            color={color}
+                            onChange={handleChangeColor}
+                          />
+                        )}
+                      </div>
+                    </div>
+                    <Divider />
+                    <div className="py-3 relative w-full my-3">
+                      <div className="text-[#bbbbbb] text-[13px] font-sans font-bold">
+                        About Me
+                      </div>
+                      <div className="text-[#bbbbbb] mb-2 text-[13px] font-sans">
+                        You can use markdowns and links if you'd like.
+                      </div>
+                      <div className="relative">
+                        <textarea
+                          value={about}
+                          onChange={handleAbout}
+                          maxLength={190}
+                          className="w-[315px] h-[136px] bg-[#1e1f22] resize-none outline-none text-white px-3 p-2 rounded-md"
+                        ></textarea>
+                        <p className="absolute text-[#a2a2a2] bottom-[10%] right-[7%]">
+                          {remainingChars}
+                        </p>
+                      </div>
                     </div>
                     <Divider />
                   </div>
-                </div>
 
-                <div className="w-[50%]">
-                  <div className="text-[#bbbbbb] mb-4 text-[13px] font-sans font-bold">
-                    PREVIEW
+                  <div className="w-[50%]">
+                    <div className="text-[#bbbbbb] mb-4 text-[13px] font-sans font-bold">
+                      PREVIEW
+                    </div>
+                    <div className="relative w-[360px] pb-3 bg-[#232428] rounded-md">
+                      <div
+                        className="w-[360px] h-[60px] rounded-md"
+                        style={{ backgroundColor: color }}
+                      ></div>
+                      {croppedImage ? (
+                        <img
+                          className="h-[85px] border-[4px] border-[#232428] absolute top-[5%] left-[5%] rounded-full w-[85px]"
+                          src={croppedImage}
+                          alt=""
+                        />
+                      ) : user.image ? (
+                        <img
+                          className="h-[85px] border-[4px] border-[#232428] absolute top-[5%] left-[5%] rounded-full w-[85px]"
+                          src={user.image}
+                          alt=""
+                        />
+                      ) : (
+                        <div className="bg-[#5865f2] w-[85px] h-[85px] border-[4px] border-[#232428] absolute top-[5%] left-[5%] flex items-center justify-center rounded-full">
+                          <SiGuilded fontSize={40} className="mt-2" />
+                        </div>
+                      )}
+
+                      <div className="mt-14 bg-[#111214] rounded-lg w-[90%] mx-auto p-3">
+                        <div className="text-xl mb-2">{user?.userId}</div>
+                        <Divider />
+                        <div className="mt-2">
+                          {about.length !== 0 && (
+                            <div>
+                              <div className="text-[#dfdfdf] mb-2 text-[12px] font-sans font-bold">
+                                ABOUT ME
+                              </div>
+                              <div className="text-[#a9a9a9] mb-4 text-[12px] font-sans font-bold">
+                                {about ? about : "You dont have any about"}
+                              </div>
+                            </div>
+                          )}
+                          <div className="text-[#dfdfdf] mb-2 text-[12px] font-sans font-bold">
+                            CUSTOMIZING MY PROFILE
+                          </div>
+                          <div className="p-3 flex items-center">
+                            <div className="bg-[#3c45a5] flex items-center justify-center rounded-md p-2">
+                              <img
+                                className="h-[48px] w-[48px]"
+                                src={edit}
+                                alt=""
+                              />
+                            </div>
+                            <div className="flex px-5 flex-col">
+                              <div className="text-[#dfdfdf] text-[16px]">
+                                User Profile
+                              </div>
+                              <div className="text-[15px]">
+                                {formatTime(timeElapsed)} elapsed
+                              </div>
+                            </div>
+                          </div>
+                          <Button
+                            variant="contained"
+                            className="w-full"
+                            color="success"
+                            onClick={() => {
+                              setShowNotification(!showNotification);
+                            }}
+                          >
+                            {" "}
+                            Example Button
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="relative w-[360px] pb-3 bg-[#232428] rounded-md">
-                    <div
-                      className="w-[360px] h-[60px] rounded-md"
-                      style={{ backgroundColor: color }}
-                    ></div>
-                    {croppedImage ? (
-                      <img
-                        className="h-[85px] border-[4px] border-[#232428] absolute top-[5%] left-[5%] rounded-full w-[85px]"
-                        src={croppedImage}
-                        alt=""
-                      />
-                    ) : user.image ? (
-                      <img
-                        className="h-[85px] border-[4px] border-[#232428] absolute top-[5%] left-[5%] rounded-full w-[85px]"
-                        src={user.image}
-                        alt=""
-                      />
-                    ) : (
-                      <div className="bg-[#5865f2] w-[85px] h-[85px] border-[4px] border-[#232428] absolute top-[5%] left-[5%] flex items-center justify-center rounded-full">
-                        <SiGuilded fontSize={40} className="mt-2" />
-                      </div>
-                    )}
-
-                    <div className="mt-14 bg-[#111214] rounded-lg w-[90%] mx-auto p-3">
-                      <div className="text-xl mb-2">{user?.userId}</div>
-                      <Divider />
-                      <div className="mt-2">
-                        <div className="text-[#dfdfdf] mb-2 text-[12px] font-sans font-bold">
-                          ABOUT ME
-                        </div>
-                        <div className="text-[#a9a9a9] mb-4 text-[12px] font-sans font-bold">
-                          Lorem ipsum dolor sit amet consectetur adipisicing
-                          elit. Facere, perspiciatis!
-                        </div>
-                        <div className="text-[#dfdfdf] mb-2 text-[12px] font-sans font-bold">
-                          CUSTOMIZING MY PROFILE
-                        </div>
-                        <div className="p-3 flex items-center">
-                          <div className="bg-[#3c45a5] flex items-center justify-center rounded-md p-2">
-                            <img
-                              className="h-[48px] w-[48px]"
-                              src={edit}
-                              alt=""
-                            />
-                          </div>
-                          <div className="flex px-5 flex-col">
-                            <div className="text-[#dfdfdf] text-[16px]">
-                              User Profile
-                            </div>
-                            <div className="text-[15px]">
-                              {formatTime(timeElapsed)} elapsed
-                            </div>
-                          </div>
-                        </div>
-                        <Button
-                          variant="contained"
-                          className="w-full"
-                          color="success"
-                          onClick={() => {
-                            setShowNotification(!showNotification);
-                          }}
-                        >
-                          {" "}
-                          Example Button
-                        </Button>
-                      </div>
+                </div>
+                <div className="premiumFeatureBorder p-3 flex items-center justify-center w-full">
+                  <div className="premium w-[717px] h-[532px] p-4 flex">
+                    <div className="w-[50%]">
+                      <h1 className="text-2xl font-bold font-sans">
+                        Try Out Boost!
+                      </h1>
                     </div>
                   </div>
                 </div>
@@ -628,7 +718,7 @@ function TabContent({ activeTab, user, setActiveTab, timeElapsed }) {
                 <motion.div
                   initial={{ y: "100%" }}
                   animate={{ y: "20%" }}
-                  className="bg-[#111214] flex p-3 items-center justify-between"
+                  className="bg-[#111214] flex p-3 items-center justify-between absolute bottom-[4%] w-[700px] h-[52px]"
                   exit={{
                     y: "100%",
                     opacity: 0,
@@ -643,14 +733,17 @@ function TabContent({ activeTab, user, setActiveTab, timeElapsed }) {
                   <div className="flex items-center gap-5">
                     <button onClick={handleResetChanges}>Reset</button>
                     <button
+                      disabled={loading}
                       onClick={() => {
                         saveChanges(user?._id);
                       }}
-                      className="hover:bg-[#105028] transition-all p-2 px-4 rounded-sm bg-[#248046]"
+                      className={`hover:bg-[#105028] w-[130px] transition-all p-2 px-4 rounded-sm ${
+                        loading ? "bg-[#113e21]" : "bg-[#248046]"
+                      }`}
                       variant="contained"
                       style={{ color: "white", fontSize: "14px" }}
                     >
-                      Save Changes
+                      {loading ? "Saving" : "Save Changes"}
                     </button>
                   </div>
                 </motion.div>
@@ -677,7 +770,7 @@ function TabContent({ activeTab, user, setActiveTab, timeElapsed }) {
   }
 }
 
-const Settings = ({ close, open, user }) => {
+const Settings = ({ close, open, user, setUser }) => {
   const [activeTab, setActiveTab] = useState("My Account");
   const [timeElapsed, setTimeElapsed] = useState(0);
   const handleTabClick = (tab) => {
@@ -736,6 +829,7 @@ const Settings = ({ close, open, user }) => {
       </div>
       <div className="flex h-full w-[49%]">
         <TabContent
+          setUser={setUser}
           timeElapsed={timeElapsed}
           setActiveTab={setActiveTab}
           user={user}
