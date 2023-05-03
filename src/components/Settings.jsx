@@ -120,7 +120,7 @@ function TabContent({ activeTab, user, setActiveTab, timeElapsed, setUser }) {
     const newValue = event.target.value;
     setAbout(newValue);
     setShowNotification(true);
-    setRemainingChars(190 - newValue.length);
+    setRemainingChars(190 - newValue?.length);
   };
   useEffect(() => {
     if (about === user?.about) {
@@ -284,7 +284,7 @@ function TabContent({ activeTab, user, setActiveTab, timeElapsed, setUser }) {
         .fetch(query)
         .then((result) => {
           // If a user with the new ID already exists, display an error message
-          if (result.length > 0) {
+          if (result?.length > 0) {
             alert("The user ID you entered is already taken.");
           } else {
             // If the new ID is available, make the patch request to update the user's ID
@@ -656,7 +656,7 @@ function TabContent({ activeTab, user, setActiveTab, timeElapsed, setUser }) {
                         <div className="text-xl mb-2">{user?.userId}</div>
                         <Divider />
                         <div className="mt-2">
-                          {about.length !== 0 && (
+                          {about?.length !== 0 && (
                             <div>
                               <div className="text-[#dfdfdf] mb-2 text-[12px] font-sans font-bold">
                                 ABOUT ME

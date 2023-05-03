@@ -5,7 +5,7 @@ import { IoMdHelpCircle } from "react-icons/io";
 import { BsFillChatRightFill } from "react-icons/bs";
 import { RiChatNewFill, RiChatNewLine } from "react-icons/ri";
 import { MdAllInbox, MdInbox } from "react-icons/md";
-import { client } from "../client";
+import { client,urlFor } from "../client";
 import Snackbar from "@mui/material/Snackbar";
 import MuiAlert from "@mui/material/Alert";
 import CloseIcon from "@mui/icons-material/Close";
@@ -44,7 +44,9 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
   const messageContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const parentContainer = messagesEndRef.current?.closest('.overflow-auto');
+    const lastChild = parentContainer?.lastElementChild;
+    lastChild?.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'nearest' });
   };
   console.log(messages);
   useEffect(() => {
@@ -59,11 +61,7 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
 
   messages.forEach((message) => {
     const date = new Date(message._createdAt);
-    const dateStr = isToday(date)
-      ? "Today"
-      : isYesterday(date)
-      ? "Yesterday"
-      : format(date, "MMM dd");
+    const dateStr = format(date, "MMM dd");
     if (!groupedMessages[dateStr]) {
       groupedMessages[dateStr] = [];
     }
@@ -322,16 +320,16 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
       {chatting ? (
         <div className="flex flex-col">
           <div className="h-[48px] p-2">
-            <p className="text-[1.15rem] flex items-center gap-3 ml-5">
+            <div className="text-[1.15rem] flex items-center gap-3 ml-5">
               <span className="text-[gray]">
                 <At />
               </span>{" "}
               {chatting.userName}
-            </p>
+            </div>
           </div>
           <Divider />
           <div className="h-[100vh] flex flex-col">
-            <div className="h-[90vh] ml-4 overflow-auto">
+            <div className="h-[90vh] ml-4 overflow-auto" ref={messagesEndRef}>
               <div className="mt-5 flex flex-col">
                 {chatting?.image ? (
                   <img
@@ -378,9 +376,9 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
                   </div>
                   {groupedMessages[dateStr].map((message, index) => (
                     <div className={` my-5 flex flex-col`} key={index}>
-                      <div className="flex gap-2">
+                      <div className="flex relative ">
                         {message.sender === user?._id ? (
-                          <div>
+                          <div className="absolute top-0">
                             {user?.image ? (
                               <img
                                 className="h-[40px] rounded-full w-[40px]"
@@ -397,7 +395,7 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
                             )}
                           </div>
                         ) : (
-                          <div>
+                          <div className="absolute top-0">
                             {chatting?.image ? (
                               <img
                                 className="h-[40px] rounded-full w-[40px]"
@@ -414,7 +412,7 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
                             )}
                           </div>
                         )}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 absolute top-0 ml-[48px]">
                           {message.sender === user?._id
                             ? user?.userName
                             : chatting?.userName}
@@ -427,14 +425,14 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
                       </div>
 
                       <div
-                        className={`text-base flex flex-col gap-2 ml-[48px] rounded-md`}
+                        className={`text-[16px] mt-6 text-[#dbdee1] font-sans flex flex-col ml-[48px] rounded-md`}
                       >
                         {message?.message}
-                        {message?.image?.url && (
+                        {message?.image && (
                           <div className="mt-3">
                             <img
-                              src={message?.image?.url}
-                              className="h-[300px] object-cover  w-[300px]"
+                              src={urlFor(message.image.asset._ref).url()}
+                              className="max-h-[350px] object-cover bg-black rounded-md  max-w-[350px]"
                               alt=""
                             />
                           </div>
