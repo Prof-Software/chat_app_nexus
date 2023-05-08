@@ -2,25 +2,34 @@ import React, { useEffect, useRef, useState } from "react";
 import { Divider, IconButton } from "@mui/material";
 import { FaUserFriends } from "react-icons/fa";
 import { IoMdHelpCircle } from "react-icons/io";
-import { BsFillChatRightFill } from "react-icons/bs";
+import { BsFillChatRightFill, BsFillReplyFill } from "react-icons/bs";
 import { RiChatNewFill, RiChatNewLine } from "react-icons/ri";
-import { MdAllInbox, MdInbox } from "react-icons/md";
-import { client,urlFor } from "../client";
+import { MdAddReaction, MdAllInbox, MdDelete, MdInbox } from "react-icons/md";
+import { client, urlFor } from "../client";
 import Snackbar from "@mui/material/Snackbar";
 import MuiAlert from "@mui/material/Alert";
 import CloseIcon from "@mui/icons-material/Close";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+
 import {
   AiOutlineCheck,
   AiOutlineClose,
+  AiOutlineEdit,
+  AiOutlineEye,
+  AiOutlineEyeInvisible,
+  AiOutlineGif,
   AiOutlineMore,
+  AiOutlinePlus,
   AiOutlineSearch,
 } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
-import { SiGuilded } from "react-icons/si";
-import { FiMoreVertical } from "react-icons/fi";
+import { SiGuilded, SiNuke } from "react-icons/si";
+import { FiMoreHorizontal, FiMoreVertical } from "react-icons/fi";
 import moment from "moment";
 import At from "../assets/At";
 import { format, isToday, isYesterday } from "date-fns";
+import axios from "axios";
 
 const MainChat = ({ user, tab, setTab, chatting }) => {
   const [active, setActive] = useState("");
@@ -37,22 +46,112 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
   const [messages, setMessages] = useState([]);
   const [showPicker, setShowPicker] = useState(false);
   const [wrongImageType, setWrongImageType] = useState(false);
-  const [imageAsset, setImageAsset] = useState();
+  const [imageAsset, setImageAsset] = useState([]);
   const [loading, setLoading] = useState(false);
   const pickerContainerRef = useRef(null);
   const [isVoiceTyping, setIsVoiceTyping] = useState(false);
   const messageContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
-  const scrollToBottom = () => {
-    const parentContainer = messagesEndRef.current?.closest('.overflow-auto');
-    const lastChild = parentContainer?.lastElementChild;
-    lastChild?.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'nearest' });
-  };
-  console.log(messages);
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const [spoiler, setSpoiler] = useState(false);
+  const [msgSpoiler, setMsgSpoiler] = useState(true);
+  const [spoilerRemoved, setSpoilerRemoved] = useState(false);
+  const [hover, setHover] = useState(false);
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const open = Boolean(anchorEl);
+  const [query, setQuery] = useState("");
+  const [gifs, setGifs] = useState([]);
+  const apiKey = "11nlisRA1etJWpPEQ940bZz5VOgstqwa";
+  const [openGif, setOpenGif] = useState(false);
+  const [selectedGif, setSelectedGif] = useState(null);
 
+  const searchGifs = async () => {
+    const response = await axios.get(
+      `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${query}&limit=50`
+    );
+    setGifs(response.data.data);
+  };
+
+  const handleGifClick = (gifUrl) => {
+    setSelectedGif(gifUrl);
+  };
+
+  const handleSearch = async () => {
+    const newGifs = await searchGifs(apiKey, query);
+    setGifs(newGifs);
+  };
+
+  const handleDelete = (messageId) => {
+    // Remove the message from the messages state array
+    setMessages((messages) =>
+      messages.filter((message) => message._id !== messageId)
+    );
+
+    // Send a delete request to the server to remove the message from the backend
+    client.delete(messageId).catch((error) => {
+      console.error(`Failed to delete message with ID ${messageId}`, error);
+      // If the delete request fails, add the message back to the messages state array
+      setMessages((messages) => [...messages, message]);
+    });
+  };
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+  const [hoverState, setHoverState] = useState({});
+
+  const handleSpoilerClick = (messageId) => {
+    setMessages((messages) =>
+      messages.map((message) =>
+        message._id === messageId ? { ...message, spoiler: false } : message
+      )
+    );
+    setSpoilerRemoved(true);
+  };
+
+  const scrollToBottom = () => {
+    const parentContainer = messagesEndRef.current?.closest(".overflow-auto");
+    const lastChild = parentContainer?.lastElementChild;
+    lastChild?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+      inline: "nearest",
+    });
+  };
+
+  useEffect(() => {
+    if (!spoilerRemoved && !hover) {
+      scrollToBottom();
+    }
+    setSpoilerRemoved(false);
+    setHover(false);
+  }, [messages]);
+  const handleHover = (messageId, isHovered) => {
+    setMessages((messages) =>
+      messages.map((message) =>
+        message._id === messageId ? { ...message, hover: isHovered } : message
+      )
+    );
+    setAnchorEl(false);
+    setHover(true);
+  };
+
+  // console.log(messages)
+
+  const imageRef = useRef(null);
+  useEffect(() => {
+    setContainerWidth(imageRef?.current ? imageRef?.current?.offsetWidth : 0);
+  }, [imageRef?.current]);
+
+  const setVisibilty = () => {
+    if (spoiler === false) {
+      setSpoiler(true);
+    } else {
+      setSpoiler(false);
+    }
+  };
   const sortedMessages = messages.sort((a, b) =>
     b._createdAt.localeCompare(a._createdAt)
   );
@@ -68,20 +167,18 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
     groupedMessages[dateStr].push(message);
   });
 
-  const sortedKeys = Object.keys(groupedMessages)
-    .sort((a, b) => {
-      // if a or b is "Today", set it to the current date
-      if (a === "Today") a = moment().format("MMM DD");
-      if (b === "Today") b = moment().format("MMM DD");
+  const sortedKeys = Object.keys(groupedMessages).sort((a, b) => {
+    // if a or b is "Today", set it to the current date
+    if (a === "Today") a = moment().format("MMM DD");
+    if (b === "Today") b = moment().format("MMM DD");
 
-      // if a or b is "Yesterday", set it to yesterday's date
-      if (a === "Yesterday") a = moment().subtract(1, "days").format("MMM DD");
-      if (b === "Yesterday") b = moment().subtract(1, "days").format("MMM DD");
+    // if a or b is "Yesterday", set it to yesterday's date
+    if (a === "Yesterday") a = moment().subtract(1, "days").format("MMM DD");
+    if (b === "Yesterday") b = moment().subtract(1, "days").format("MMM DD");
 
-      // compare the dates in descending order
-      return moment(b, "MMM DD").diff(moment(a, "MMM DD"));
-    })
-    .reverse();
+    // compare the dates in descending order
+    return moment(b, "MMM DD").diff(moment(a, "MMM DD"));
+  });
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -101,20 +198,25 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
       )
       .subscribe((result) => {
         console.log("New message received:", result.result);
-        setMessages((prevMessages) => [...prevMessages, result.result]);
+        if (result.result?._createdAt) {
+          // check if _createdAt exists
+          setMessages((prevMessages) => [...prevMessages, result.result]);
+        }
       });
 
     return () => subscription.unsubscribe();
   }, [user, chatting]);
-
+  console.log(selectedGif);
   const handleSendMessage = async () => {
     if (message.trim()) {
       const newMessage = {
         message: message,
         image: imageAsset && imageAsset,
+        spoiler: spoiler,
         sender: user?._id,
         receiver: chatting?._id,
         timestamp: moment().toISOString(),
+        gif: selectedGif && selectedGif,
       };
 
       try {
@@ -123,19 +225,19 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
           ...newMessage,
         });
         setMessage("");
+        setImageAsset(null);
+        setOpenGif(false);
+        setSelectedGif(null);
 
         const date = new Date(message._createdAt);
-        const dateStr = isToday(date)
-          ? "Today"
-          : isYesterday(date)
-          ? "Yesterday"
-          : format(date, "MMM dd");
+        const dateStr = format(date, "MMM dd");
         if (!groupedMessages[dateStr]) {
           groupedMessages[dateStr] = [];
         }
         groupedMessages[dateStr].push(message);
         messageContainerRef.current.scrollIntoView({ behavior: "smooth" });
         setMessages([...messages, { ...newMessage, isSentByMe: true }]);
+
         setImageAsset(null);
       } catch (error) {
         console.error("Error sending message:", error);
@@ -204,6 +306,43 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
 
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
+  };
+  const uploadImage = (e) => {
+    const files = e.target.files;
+    const allowedTypes = ["image/png", "image/svg", "image/jpeg", "image/tiff"];
+    const selectedFiles = [];
+
+    for (let i = 0; i < files.length && i < 6; i++) {
+      const file = files[i];
+
+      if (allowedTypes.includes(file.type)) {
+        selectedFiles.push(file);
+      }
+    }
+
+    if (selectedFiles.length === 0) {
+      setWrongImageType(true);
+      return;
+    }
+
+    setWrongImageType(false);
+    setLoading(true);
+
+    Promise.all(
+      selectedFiles.map((file) =>
+        client.assets.upload("image", file, {
+          contentType: file.type,
+          filename: file.name,
+        })
+      )
+    )
+      .then((documents) => {
+        setImageAsset(documents);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.log("Upload failed:", error.message);
+      });
   };
 
   const cancelFriendRequest = (request) => {
@@ -329,8 +468,8 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
           </div>
           <Divider />
           <div className="h-[100vh] flex flex-col">
-            <div className="h-[90vh] ml-4 overflow-auto" ref={messagesEndRef}>
-              <div className="mt-5 flex flex-col">
+            <div className="h-[90vh] overflow-auto" ref={messagesEndRef}>
+              <div className="mt-5 flex flex-col pl-4">
                 {chatting?.image ? (
                   <img
                     className="h-[80px] rounded-full w-[80px]"
@@ -362,7 +501,7 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
                   </button>
                 </div>
               </div>
-              {sortedKeys.map((dateStr) => (
+              {sortedKeys.reverse().map((dateStr) => (
                 <div key={dateStr} className="gap-4 w-full flex flex-col">
                   <div className="my-4 text-[white] flex items-center justify-center w-full font-bold text-center">
                     <div className="w-[98%] m-auto relative">
@@ -374,9 +513,54 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
                       </p>
                     </div>
                   </div>
-                  {groupedMessages[dateStr].map((message, index) => (
-                    <div className={` my-5 flex flex-col`} key={index}>
+                  {groupedMessages[dateStr].reverse().map((message, index) => (
+                    <div
+                      className={` my-5  py-4 flex flex-col bg-[#313338] pl-4 hover:bg-[#2e3035] relative `}
+                      key={index}
+                      onMouseEnter={() => handleHover(message._id, true)}
+                      onMouseLeave={() => handleHover(message._id, false)}
+                    >
                       <div className="flex relative ">
+                        {message.hover && (
+                          <div className="absolute top-[-25px] rounded-sm border border-[#1c1d20] right-[10%] bg-[#303237]">
+                            <button className=" p-1 px-3 text-[gray] hover:bg-[#ffffff18] hover:text-white">
+                              <MdAddReaction fontSize={25} />
+                            </button>
+                            <button className=" p-1 px-3 text-[gray] hover:bg-[#ffffff18] hover:text-white">
+                              <BsFillReplyFill fontSize={25} />
+                            </button>
+                            <button
+                              onClick={handleClick}
+                              className=" p-1 px-3 text-[gray] hover:bg-[#ffffff18] hover:text-white"
+                            >
+                              <FiMoreHorizontal fontSize={25} />
+                            </button>
+                            <Menu
+                              id="basic-menu"
+                              anchorEl={anchorEl}
+                              open={open}
+                              onClose={handleClose}
+                            >
+                              {message.sender === user?._id ? (
+                                <MenuItem
+                                  className="text-[red]"
+                                  onClick={() => {
+                                    handleDelete(message._id);
+                                  }}
+                                >
+                                  Delete Message
+                                </MenuItem>
+                              ) : (
+                                <MenuItem
+                                  className="text-[red]"
+                                  onClick={handleClose}
+                                >
+                                  Report Message
+                                </MenuItem>
+                              )}
+                            </Menu>
+                          </div>
+                        )}
                         {message.sender === user?._id ? (
                           <div className="absolute top-0">
                             {user?.image ? (
@@ -425,16 +609,61 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
                       </div>
 
                       <div
-                        className={`text-[16px] mt-6 text-[#dbdee1] font-sans flex flex-col ml-[48px] rounded-md`}
+                        className={`text-[16px] text-justify max-w-[50%] mt-6 text-[#dbdee1] font-sans flex flex-col ml-[48px] rounded-md`}
                       >
                         {message?.message}
                         {message?.image && (
-                          <div className="mt-3">
-                            <img
-                              src={urlFor(message.image.asset._ref).url()}
-                              className="max-h-[350px] object-cover bg-black rounded-md  max-w-[350px]"
-                              alt=""
-                            />
+                          <div className="mt-3 ">
+                            <div className="">
+                              {message?.spoiler !== true ? (
+                                <div className="h-[350px]">
+                                  <img
+                                    ref={imageRef}
+                                    src={message.image.url}
+                                    className="object-cover h-[350px] bg-black rounded-md"
+                                    alt=""
+                                  />
+                                </div>
+                              ) : (
+                                <div
+                                  className="h-[350px] flex items-center justify-center rounded-md"
+                                  style={{
+                                    backgroundImage: `url(${message.image.url})`,
+                                    backgroundSize: "cover",
+                                    backgroundPosition: "center",
+                                    maxHeight: "350px",
+                                    backgroundColor: "black",
+                                    borderRadius: "0.375rem",
+                                    maxWidth: "50%",
+                                  }}
+                                >
+                                  {message.spoiler === true && (
+                                    <div className="h-full w-full flex items-center justify-center backdrop-blur-3xl rounded-md">
+                                      <button
+                                        onClick={() =>
+                                          handleSpoilerClick(message._id)
+                                        }
+                                        className="bg-black px-4 p-2 text-xl rounded-full"
+                                      >
+                                        SPOILER
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        {message?.gif && (
+                          <div className="mt-3 ">
+                            <div className="h-[350px]">
+                              <img
+                                ref={imageRef}
+                                src={message.gif}
+                                className="object-cover h-[350px] bg-black rounded-md"
+                                alt=""
+                              />
+                            </div>
                           </div>
                         )}
                       </div>
@@ -442,25 +671,210 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
                   ))}
                 </div>
               ))}
+              <div></div>
             </div>
-            <div className="h-[10vh] mb-16 flex items-center justify-center p-2">
-              <div className="w-full relative">
+            <div className=" mb-16 flex flex-col p-2">
+              <div className="w-[90%] bg-[#383a40] m-auto rounded-t-md">
+                {imageAsset && imageAsset.length === 1 ? (
+                  <div className="ml-2  p-2 mt-4">
+                    <div className="relative max-w-[180px]">
+                      <div className="flex flex-col relative mb-3">
+                        <img
+                          src={imageAsset[0]?.url}
+                          alt="uploaded-pic"
+                          className={`max-h-[180px]  mb-3 object-cover bg-black rounded-md  max-w-[180px]`}
+                        />
+                        {spoiler === true && (
+                          <div className="w-full backdrop-blur-xl absolute top-0 rounded-md h-full flex items-center justify-center">
+                            <button
+                              onClick={() => setSpoiler(!spoiler)}
+                              className="bg-black text-white px-4 p-1 text-base rounded-full"
+                            >
+                              SPOILER
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="absolute top-[-1rem] bg-[#313338] shadow-md rounded-md right-[-1rem]">
+                        <button
+                          type="button"
+                          className=" p-1 text-[#b63434] rounded-full text-xl cursor-pointer outline-none  transition-all duration-500 ease-in-out"
+                          onClick={() => setImageAsset(null)}
+                        >
+                          <MdDelete />
+                        </button>
+                        <button
+                          type="button"
+                          className=" p-1 text-[#ffffff] rounded-full text-xl cursor-pointer outline-none  transition-all duration-500 ease-in-out"
+                          onClick={() => setImageAsset(null)}
+                        >
+                          <AiOutlineEdit />
+                        </button>
+                        <button
+                          type="button"
+                          className=" p-1 text-[#ffffff] rounded-full text-xl cursor-pointer outline-none  transition-all duration-500 ease-in-out"
+                          onClick={setVisibilty}
+                        >
+                          <AiOutlineEye />
+                        </button>
+                      </div>
+                    </div>
+                    <Divider />
+                  </div>
+                ) : (
+                  ""
+                )}
+                {imageAsset && imageAsset.length === 2 ? (
+                  <div className="ml-2  p-2 mt-4">
+                    <div>
+                      {imageAsset.map((asset, index) => (
+                        <div className="relative max-w-[180px]">
+                          <div className="flex flex-col relative mb-3">
+                            <img
+                              src={imageAsset?.url}
+                              alt="uploaded-pic"
+                              className={`max-h-[180px]  mb-3 object-cover bg-black rounded-md  max-w-[180px]`}
+                            />
+                            {spoiler === true && (
+                              <div className="w-full backdrop-blur-xl absolute top-0 rounded-md h-full flex items-center justify-center">
+                                <button
+                                  onClick={() => setSpoiler(!spoiler)}
+                                  className="bg-black text-white px-4 p-1 text-base rounded-full"
+                                >
+                                  SPOILER
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                          <div className="absolute top-[-1rem] bg-[#313338] shadow-md rounded-md right-[-1rem]">
+                            <button
+                              type="button"
+                              className=" p-1 text-[#b63434] rounded-full text-xl cursor-pointer outline-none  transition-all duration-500 ease-in-out"
+                              onClick={() => setImageAsset(null)}
+                            >
+                              <MdDelete />
+                            </button>
+                            <button
+                              type="button"
+                              className=" p-1 text-[#ffffff] rounded-full text-xl cursor-pointer outline-none  transition-all duration-500 ease-in-out"
+                              onClick={() => setImageAsset(null)}
+                            >
+                              <AiOutlineEdit />
+                            </button>
+                            <button
+                              type="button"
+                              className=" p-1 text-[#ffffff] rounded-full text-xl cursor-pointer outline-none  transition-all duration-500 ease-in-out"
+                              onClick={setVisibilty}
+                            >
+                              <AiOutlineEye />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <Divider />
+                  </div>
+                ) : (
+                  ""
+                )}
+                {selectedGif ? (
+                  <div className="ml-2  p-2 mt-4">
+                    <div className="relative max-w-[180px]">
+                      <div className="flex flex-col relative mb-3">
+                        <img
+                          src={selectedGif}
+                          alt="uploaded-pic"
+                          className={`max-h-[180px]  mb-3 object-cover bg-black rounded-md  max-w-[180px]`}
+                        />
+                      </div>
+                      <div className="absolute top-[-1rem] bg-[#313338] shadow-md rounded-md right-[-1rem]">
+                        <button
+                          type="button"
+                          className=" p-1 text-[#b63434] rounded-full text-xl cursor-pointer outline-none  transition-all duration-500 ease-in-out"
+                          onClick={() => setSelectedGif(null)}
+                        >
+                          <MdDelete />
+                        </button>
+                      </div>
+                    </div>
+                    <Divider />
+                  </div>
+                ) : (
+                  ""
+                )}
+              </div>
+              <div className="w-[90%] relative m-auto">
                 <input
                   type="text"
                   value={message}
                   onChange={(e) => {
                     setMessage(e.target.value);
                   }}
-                  className="bg-[#383a40] rounded-md outline-none p-3 text-lg h-full w-full "
+                  onKeyDown={(e) => {
+                    if (e.keyCode === 13) {
+                      // Enter key
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                  placeholder={`Message @${chatting?.userName}`}
+                  className={`bg-[#383a40] pl-12 ${
+                    !imageAsset ? "rounded-md" : "rounded-b-md"
+                  } outline-none p-3 text-lg h-full w-full `}
                   name=""
                   id=""
                 />
-                <button
-                  className="absolute right-[2%] text-xl top-2"
-                  onClick={handleSendMessage}
+                <div className="p-[2px] cursor-pointer absolute top-[26%] ml-3 bg-[#b5bac1] text-[#383a40] rounded-full">
+                  <input
+                    type="file"
+                    multiple
+                    name="upload-image"
+                    onChange={uploadImage}
+                    className="hidden"
+                    id="file-input"
+                  />
+                  <label htmlFor="file-input">
+                    <AiOutlinePlus />
+                  </label>
+                </div>
+                <div
+                  onClick={() => {
+                    setOpenGif(!openGif);
+                  }}
+                  className="p-[2px] cursor-pointer absolute right-0 top-[26%] mr-3 bg-[#b5bac1] text-[#383a40] rounded-sm"
                 >
-                  send
-                </button>
+                  <AiOutlineGif fontSize={20} />
+                </div>
+                {openGif && (
+                  <div className="absolute top-[-420px] right-0 h-[400px] rounded-md w-[400px] bg-[#1e1e1e]">
+                    <input
+                      type="text"
+                      value={query}
+                      className="bg-black"
+                      onChange={(e) => setQuery(e.target.value)}
+                    />
+                    <button onClick={searchGifs}>Search</button>
+
+                    <div className="flex gap-3 flex-wrap h-[90%] overflow-auto items-center justify-center">
+                      {gifs.map((gif) => (
+                        <img
+                          key={gif.id}
+                          src={gif.images.fixed_height.url}
+                          alt={gif.title}
+                          onClick={() =>
+                            handleGifClick(gif.images.fixed_height.url)
+                          }
+                          className={
+                            selectedGif === gif.images.fixed_height.url
+                              ? "border-2 border-blue-500"
+                              : ""
+                          }
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -23,14 +23,14 @@ const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-const Private = ({ user, setUser,chatting,setChatting }) => {
+const Private = ({ user, setUser, chatting, setChatting }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [friends, setFriends] = useState([]);
   const [hover, setHover] = useState(false);
   const [open, setOpen] = React.useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [color, setColor] = useState(user?.banner);
-  console.log(user?.banner);
+  
 
   const handleAnimationComplete = () => {
     setIsAnimating(false);
@@ -80,7 +80,6 @@ const Private = ({ user, setUser,chatting,setChatting }) => {
     localStorage.removeItem("user");
     window.location.href = "/login";
   }
-  console.log(friends)
 
   return (
     <div className="w-[240px] bg-[#2b2d31] h-full flex flex-col justify-between">
@@ -96,7 +95,7 @@ const Private = ({ user, setUser,chatting,setChatting }) => {
         </div>
         <Divider />
         <div className="mt-2 px-3">
-          <button className="bg-[#404249] p-3 rounded-lg gap-3 flex items-center w-full">
+          <button onClick={()=>{setChatting(null)}} className="bg-[#404249] p-3 rounded-lg gap-3 flex items-center w-full">
             <FaUserFriends fontSize={20} /> Friends
           </button>
         </div>
@@ -113,21 +112,39 @@ const Private = ({ user, setUser,chatting,setChatting }) => {
               {friends?.map((friend) => (
                 <div
                   className=" text-[gray] hover:text-[white] hover:bg-[#ffffff2d] px-3 p-2 cursor-pointer rounded-md"
-                  
                   key={friend._id}
                 >
                   {friend.sender.userId === user?.userId ? (
-                    <div onClick={()=>{setChatting(friend.receiver)}} className="flex gap-3 items-center">
-                      <div className="bg-[#5865f2]  text-white w-[30px] h-[30px] flex items-center justify-center rounded-full">
-                        <SiGuilded />
-                      </div>
+                    <div
+                      onClick={() => {
+                        setChatting(friend.receiver);
+                      }}
+                      className="flex gap-3 items-center"
+                    >
+                      {friend.receiver.image ? (
+                        <img src={friend.receiver.image} className="w-[30px] h-[30px] rounded-full" alt="" />
+                      ) : (
+                        <div className="bg-[#5865f2]  text-white w-[30px] h-[30px] flex items-center justify-center rounded-full">
+                          <SiGuilded />
+                        </div>
+                      )}
+
                       <p>{friend.receiver.userName}</p>
                     </div>
                   ) : (
-                    <div onClick={()=>{setChatting(friend.sender)}} className="flex gap-3 items-center">
-                      <div className="bg-[#5865f2] text-white w-[30px] h-[30px] flex items-center justify-center rounded-full">
-                        <SiGuilded />
-                      </div>
+                    <div
+                      onClick={() => {
+                        setChatting(friend.sender);
+                      }}
+                      className="flex gap-3 items-center"
+                    >
+                      {friend.sender.image ? (
+                        <img src={friend.sender.image} className="w-[30px] h-[30px] rounded-full" alt="" />
+                      ) : (
+                        <div className="bg-[#5865f2]  text-white w-[30px] h-[30px] flex items-center justify-center rounded-full">
+                          <SiGuilded />
+                        </div>
+                      )}
                       <p>{friend.sender.userName}</p>
                     </div>
                   )}
@@ -213,12 +230,12 @@ const Private = ({ user, setUser,chatting,setChatting }) => {
                   {user?.about?.length !== 0 && (
                     <div className="my-2">
                       <p className="text-[13px] uppercase font-sans font-bold">
-                      About Me
-                    </p>
+                        About Me
+                      </p>
                       <div className="text-[13px] text-[#a2a2a2] mb-3">
                         {user?.about ? user?.about : "You dont have any about"}
                       </div>
-                      <Divider/>
+                      <Divider />
                     </div>
                   )}
                   <div className="flex flex-col  my-2">
