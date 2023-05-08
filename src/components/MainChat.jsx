@@ -46,7 +46,7 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
   const [messages, setMessages] = useState([]);
   const [showPicker, setShowPicker] = useState(false);
   const [wrongImageType, setWrongImageType] = useState(false);
-  const [imageAsset, setImageAsset] = useState([]);
+  const [imageAsset, setImageAsset] = useState();
   const [loading, setLoading] = useState(false);
   const pickerContainerRef = useRef(null);
   const [isVoiceTyping, setIsVoiceTyping] = useState(false);
@@ -675,12 +675,12 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
             </div>
             <div className=" mb-16 flex flex-col p-2">
               <div className="w-[90%] bg-[#383a40] m-auto rounded-t-md">
-                {imageAsset && imageAsset.length === 1 ? (
+                {imageAsset ? (
                   <div className="ml-2  p-2 mt-4">
                     <div className="relative max-w-[180px]">
                       <div className="flex flex-col relative mb-3">
                         <img
-                          src={imageAsset[0]?.url}
+                          src={imageAsset?.url}
                           alt="uploaded-pic"
                           className={`max-h-[180px]  mb-3 object-cover bg-black rounded-md  max-w-[180px]`}
                         />
@@ -719,60 +719,6 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
                         </button>
                       </div>
                     </div>
-                    <Divider />
-                  </div>
-                ) : (
-                  ""
-                )}
-                {imageAsset && imageAsset.length === 2 ? (
-                  <div className="ml-2  p-2 mt-4">
-                    <div>
-                      {imageAsset.map((asset, index) => (
-                        <div className="relative max-w-[180px]">
-                          <div className="flex flex-col relative mb-3">
-                            <img
-                              src={imageAsset?.url}
-                              alt="uploaded-pic"
-                              className={`max-h-[180px]  mb-3 object-cover bg-black rounded-md  max-w-[180px]`}
-                            />
-                            {spoiler === true && (
-                              <div className="w-full backdrop-blur-xl absolute top-0 rounded-md h-full flex items-center justify-center">
-                                <button
-                                  onClick={() => setSpoiler(!spoiler)}
-                                  className="bg-black text-white px-4 p-1 text-base rounded-full"
-                                >
-                                  SPOILER
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                          <div className="absolute top-[-1rem] bg-[#313338] shadow-md rounded-md right-[-1rem]">
-                            <button
-                              type="button"
-                              className=" p-1 text-[#b63434] rounded-full text-xl cursor-pointer outline-none  transition-all duration-500 ease-in-out"
-                              onClick={() => setImageAsset(null)}
-                            >
-                              <MdDelete />
-                            </button>
-                            <button
-                              type="button"
-                              className=" p-1 text-[#ffffff] rounded-full text-xl cursor-pointer outline-none  transition-all duration-500 ease-in-out"
-                              onClick={() => setImageAsset(null)}
-                            >
-                              <AiOutlineEdit />
-                            </button>
-                            <button
-                              type="button"
-                              className=" p-1 text-[#ffffff] rounded-full text-xl cursor-pointer outline-none  transition-all duration-500 ease-in-out"
-                              onClick={setVisibilty}
-                            >
-                              <AiOutlineEye />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
                     <Divider />
                   </div>
                 ) : (
