@@ -308,41 +308,33 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
     setSnackbarOpen(false);
   };
   const uploadImage = (e) => {
-    const files = e.target.files;
-    const allowedTypes = ["image/png", "image/svg", "image/jpeg", "image/tiff"];
-    const selectedFiles = [];
-
-    for (let i = 0; i < files.length && i < 6; i++) {
-      const file = files[i];
-
-      if (allowedTypes.includes(file.type)) {
-        selectedFiles.push(file);
-      }
-    }
-
-    if (selectedFiles.length === 0) {
-      setWrongImageType(true);
-      return;
-    }
-
-    setWrongImageType(false);
-    setLoading(true);
-
-    Promise.all(
-      selectedFiles.map((file) =>
-        client.assets.upload("image", file, {
-          contentType: file.type,
-          filename: file.name,
+    const selectedFile = e.target.files[0];
+    // uploading asset to sanity
+    if (
+      selectedFile.type === "image/png" ||
+      selectedFile.type === "image/svg" ||
+      selectedFile.type === "image/jpeg" ||
+      selectedFile.type === "image/gif" ||
+      selectedFile.type === "image/tiff"
+    ) {
+      setWrongImageType(false);
+      setLoading(true);
+      client.assets
+        .upload("image", selectedFile, {
+          contentType: selectedFile.type,
+          filename: selectedFile.name,
         })
-      )
-    )
-      .then((documents) => {
-        setImageAsset(documents);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.log("Upload failed:", error.message);
-      });
+        .then((document) => {
+          setImageAsset(document);
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.log("Upload failed:", error.message);
+        });
+    } else {
+      setLoading(false);
+      setWrongImageType(true);
+    }
   };
 
   const cancelFriendRequest = (request) => {
