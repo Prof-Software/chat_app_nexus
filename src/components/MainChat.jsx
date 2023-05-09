@@ -4,6 +4,7 @@ import { FaUserFriends } from "react-icons/fa";
 import { IoMdHelpCircle } from "react-icons/io";
 import { BsFillChatRightFill, BsFillReplyFill } from "react-icons/bs";
 import { RiChatNewFill, RiChatNewLine } from "react-icons/ri";
+import { CgProfile } from "react-icons/cg";
 import { MdAddReaction, MdAllInbox, MdDelete, MdInbox } from "react-icons/md";
 import { client, urlFor } from "../client";
 import Snackbar from "@mui/material/Snackbar";
@@ -30,7 +31,19 @@ import moment from "moment";
 import At from "../assets/At";
 import { format, isToday, isYesterday } from "date-fns";
 import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
 
+// Define some variants for the motion animation
+const sidebarVariants = {
+  open: {
+    x: 0,
+    transition: { duration: 0.3, ease: "easeInOut" },
+  },
+  closed: {
+    x: "100%",
+    transition: { duration: 0.3, ease: "easeInOut" },
+  },
+};
 const MainChat = ({ user, tab, setTab, chatting }) => {
   const [active, setActive] = useState("");
   const [frndreq, setFrndreq] = useState("");
@@ -64,6 +77,7 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
   const apiKey = "11nlisRA1etJWpPEQ940bZz5VOgstqwa";
   const [openGif, setOpenGif] = useState(false);
   const [selectedGif, setSelectedGif] = useState(null);
+  const [userprofile, setUserprofile] = useState(true);
 
   const searchGifs = async () => {
     const response = await axios.get(
@@ -83,16 +97,20 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
 
   const handleDelete = (messageId) => {
     // Remove the message from the messages state array
-    setMessages((messages) =>
-      messages.filter((message) => message._id !== messageId)
-    );
+    // setMessages((messages) =>
+    //   messages.filter((message) => message._id !== messageId)
+    // );
 
     // Send a delete request to the server to remove the message from the backend
-    client.delete(messageId).catch((error) => {
-      console.error(`Failed to delete message with ID ${messageId}`, error);
-      // If the delete request fails, add the message back to the messages state array
-      setMessages((messages) => [...messages, message]);
-    });
+    client
+      .patch(messageId)
+      .set({ message: "Message Deleted" })
+      .commit()
+      .catch((error) => {
+        console.error(`Failed to delete message with ID ${messageId}`, error);
+        // If the delete request fails, add the message back to the messages state array
+        setMessages((messages) => [...messages, message]);
+      });
   };
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -182,9 +200,8 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
 
   useEffect(() => {
     const fetchMessages = async () => {
-      const query = `*[_type == "message" && (sender == "${user?._id}" && receiver == "${chatting?._id}" || sender == "${chatting?._id}" && receiver == "${user?._id}")] | order(timestamp asc)`;
+      const query = `*[_type == "message" && (sender == "${user?._id}" && receiver == "${chatting?._id}" || sender == "${chatting?._id}" && receiver == "${user?._id}") && !defined(deleted)] | order(timestamp asc)`;
       const result = await client.fetch(query);
-
       setMessages(result);
     };
 
@@ -194,11 +211,11 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
 
     const subscription = client
       .listen(
-        `*[_type == "message" && (sender == "${user?._id}" && receiver == "${chatting?._id}" || sender == "${chatting?._id}" && receiver == "${user?._id}")]`
+        `*[_type == "message" && (sender == "${user?._id}" && receiver == "${chatting?._id}" || sender == "${chatting?._id}" && receiver == "${user?._id}") && !defined(deleted)]`
       )
       .subscribe((result) => {
         console.log("New message received:", result.result);
-        if (result.result?._createdAt) {
+        if (result.result?._createdAt && !result.result.deleted) {
           // check if _createdAt exists
           setMessages((prevMessages) => [...prevMessages, result.result]);
         }
@@ -206,7 +223,7 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
 
     return () => subscription.unsubscribe();
   }, [user, chatting]);
-  console.log(selectedGif);
+
   const handleSendMessage = async () => {
     if (message.trim()) {
       const newMessage = {
@@ -450,223 +467,314 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
     <div className="w-full h-[100vh]">
       {chatting ? (
         <div className="flex flex-col">
-          <div className="h-[48px] p-2">
+          <div className="h-[48px] p-2 flex justify-between">
             <div className="text-[1.15rem] flex items-center gap-3 ml-5">
               <span className="text-[gray]">
                 <At />
               </span>{" "}
               {chatting.userName}
             </div>
+            <div
+              onClick={() => {
+                setUserprofile(!userprofile);
+              }}
+              className="text-[1.15rem] text-[gray] flex items-center gap-3 ml-5"
+            >
+              <CgProfile fontSize={30} />
+            </div>
           </div>
           <Divider />
           <div className="h-[100vh] flex flex-col">
-            <div className="h-[90vh] overflow-auto" ref={messagesEndRef}>
-              <div className="mt-5 flex flex-col pl-4">
-                {chatting?.image ? (
-                  <img
-                    className="h-[80px] rounded-full w-[80px]"
-                    src={chatting?.image}
-                    alt=""
-                  />
-                ) : (
-                  <div className="h-[80px] flex items-center justify-center rounded-full bg-[#5865f2] w-[80px]">
-                    <SiGuilded fontSize={40} className="text-white" />
-                  </div>
-                )}
-                <h1 className="text-3xl mt-3 font-bold font-sans">
-                  {chatting?.userName}
-                </h1>
-                <p className="text-base mt-3 text-[#b1b1b1]">
-                  This is the beginning of your direct message history with{" "}
-                  <span className="text-[#e2dfdf] font-sans font-bold">
-                    {chatting?.userName}
-                  </span>
-                  .
-                </p>
-                <div className="mt-6 flex gap-4 items-center">
-                  <p className="text-sm text-[#b1b1b1]">No servers in common</p>
-                  <button className="text-sm bg-[#4e5058] py-1 px-3 rounded-sm hover:bg-[#666] transition-all">
-                    Remove Friend
-                  </button>
-                  <button className="text-sm bg-[#4e5058] py-1 px-3 rounded-sm hover:bg-[#666] transition-all">
-                    Block
-                  </button>
-                </div>
-              </div>
-              {sortedKeys.reverse().map((dateStr) => (
-                <div key={dateStr} className="gap-4 w-full flex flex-col">
-                  <div className="my-4 text-[white] flex items-center justify-center w-full font-bold text-center">
-                    <div className="w-[98%] m-auto relative">
-                      <div className="absolute h-[10px] bottom-[-18px] w-full">
-                        <Divider />
-                      </div>
-                      <p className="absolute right-[48%] top-[0%] px-3 bg-[#313338] text-[12px] text-[gray]">
-                        {dateStr}
-                      </p>
+            <div
+              ref={messagesEndRef}
+              className="h-[90vh]  w-[full] overflow-auto"
+            >
+              <div className="">
+                <div className="mt-5 flex flex-col pl-4">
+                  {chatting?.image ? (
+                    <img
+                      className="h-[80px] rounded-full w-[80px]"
+                      src={chatting?.image}
+                      alt=""
+                    />
+                  ) : (
+                    <div className="h-[80px] flex items-center justify-center rounded-full bg-[#5865f2] w-[80px]">
+                      <SiGuilded fontSize={40} className="text-white" />
                     </div>
+                  )}
+                  <h1 className="text-3xl mt-3 font-bold font-sans">
+                    {chatting?.userName}
+                  </h1>
+                  <p className="text-base mt-3 text-[#b1b1b1]">
+                    This is the beginning of your direct message history with{" "}
+                    <span className="text-[#e2dfdf] font-sans font-bold">
+                      {chatting?.userName}
+                    </span>
+                    .
+                  </p>
+                  <div className="mt-6 flex gap-4 items-center">
+                    <p className="text-sm text-[#b1b1b1]">
+                      No servers in common
+                    </p>
+                    <button className="text-sm bg-[#4e5058] py-1 px-3 rounded-sm hover:bg-[#666] transition-all">
+                      Remove Friend
+                    </button>
+                    <button className="text-sm bg-[#4e5058] py-1 px-3 rounded-sm hover:bg-[#666] transition-all">
+                      Block
+                    </button>
                   </div>
-                  {groupedMessages[dateStr].reverse().map((message, index) => (
-                    <div
-                      className={` my-5  py-4 flex flex-col bg-[#313338] pl-4 hover:bg-[#2e3035] relative `}
-                      key={index}
-                      onMouseEnter={() => handleHover(message._id, true)}
-                      onMouseLeave={() => handleHover(message._id, false)}
-                    >
-                      <div className="flex relative ">
-                        {message.hover && (
-                          <div className="absolute top-[-25px] rounded-sm border border-[#1c1d20] right-[10%] bg-[#303237]">
-                            <button className=" p-1 px-3 text-[gray] hover:bg-[#ffffff18] hover:text-white">
-                              <MdAddReaction fontSize={25} />
-                            </button>
-                            <button className=" p-1 px-3 text-[gray] hover:bg-[#ffffff18] hover:text-white">
-                              <BsFillReplyFill fontSize={25} />
-                            </button>
-                            <button
-                              onClick={handleClick}
-                              className=" p-1 px-3 text-[gray] hover:bg-[#ffffff18] hover:text-white"
+                </div>
+                <div className="flex">
+                  <div
+                    className={`flex flex-col ${
+                      userprofile ? "w-[70%]" : "w-full"
+                    }`}
+                  >
+                    {sortedKeys.reverse().map((dateStr) => (
+                      <div key={dateStr} className="gap-4 w-full flex flex-col">
+                        <div className="my-4 text-[white] flex items-center justify-center w-full font-bold text-center">
+                          <div className="w-[98%] m-auto relative">
+                            <div className="absolute h-[10px] bottom-[-18px] w-full">
+                              <Divider />
+                            </div>
+                            <p className="absolute right-[48%] top-[0%] px-3 bg-[#313338] text-[12px] text-[gray]">
+                              {dateStr}
+                            </p>
+                          </div>
+                        </div>
+                        {groupedMessages[dateStr]
+                          .reverse()
+                          .map((message, index) => (
+                            <div
+                              className={` my-5 ${
+                                message.deleted === true && "hidden"
+                              } py-4 flex flex-col bg-[#313338] pl-4 hover:bg-[#2e3035] relative `}
+                              key={index}
+                              onMouseEnter={() =>
+                                handleHover(message._id, true)
+                              }
+                              onMouseLeave={() =>
+                                handleHover(message._id, false)
+                              }
                             >
-                              <FiMoreHorizontal fontSize={25} />
-                            </button>
-                            <Menu
-                              id="basic-menu"
-                              anchorEl={anchorEl}
-                              open={open}
-                              onClose={handleClose}
-                            >
-                              {message.sender === user?._id ? (
-                                <MenuItem
-                                  className="text-[red]"
-                                  onClick={() => {
-                                    handleDelete(message._id);
-                                  }}
-                                >
-                                  Delete Message
-                                </MenuItem>
-                              ) : (
-                                <MenuItem
-                                  className="text-[red]"
-                                  onClick={handleClose}
-                                >
-                                  Report Message
-                                </MenuItem>
-                              )}
-                            </Menu>
-                          </div>
-                        )}
-                        {message.sender === user?._id ? (
-                          <div className="absolute top-0">
-                            {user?.image ? (
-                              <img
-                                className="h-[40px] rounded-full w-[40px]"
-                                src={user?.image}
-                                alt=""
-                              />
-                            ) : (
-                              <div className="h-[40px] flex items-center justify-center rounded-full bg-[#5865f2] w-[40px]">
-                                <SiGuilded
-                                  fontSize={20}
-                                  className="text-white"
-                                />
+                              <div className="flex relative ">
+                                {message.hover && (
+                                  <div className="absolute top-[-25px] rounded-sm border border-[#1c1d20] right-[10%] bg-[#303237]">
+                                    <button className=" p-1 px-3 text-[gray] hover:bg-[#ffffff18] hover:text-white">
+                                      <MdAddReaction fontSize={25} />
+                                    </button>
+                                    <button className=" p-1 px-3 text-[gray] hover:bg-[#ffffff18] hover:text-white">
+                                      <BsFillReplyFill fontSize={25} />
+                                    </button>
+                                    <button
+                                      onClick={handleClick}
+                                      className=" p-1 px-3 text-[gray] hover:bg-[#ffffff18] hover:text-white"
+                                    >
+                                      <FiMoreHorizontal fontSize={25} />
+                                    </button>
+                                    <Menu
+                                      id="basic-menu"
+                                      anchorEl={anchorEl}
+                                      open={open}
+                                      onClose={handleClose}
+                                    >
+                                      {message.sender === user?._id ? (
+                                        <MenuItem
+                                          className="text-[red]"
+                                          onClick={() => {
+                                            handleDelete(message._id);
+                                          }}
+                                        >
+                                          Delete Message
+                                        </MenuItem>
+                                      ) : (
+                                        <MenuItem
+                                          className="text-[red]"
+                                          onClick={handleClose}
+                                        >
+                                          Report Message
+                                        </MenuItem>
+                                      )}
+                                    </Menu>
+                                  </div>
+                                )}
+                                {message.sender === user?._id ? (
+                                  <div className="absolute top-0">
+                                    {user?.image ? (
+                                      <img
+                                        className="h-[40px] rounded-full w-[40px]"
+                                        src={user?.image}
+                                        alt=""
+                                      />
+                                    ) : (
+                                      <div className="h-[40px] flex items-center justify-center rounded-full bg-[#5865f2] w-[40px]">
+                                        <SiGuilded
+                                          fontSize={20}
+                                          className="text-white"
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="absolute top-0">
+                                    {chatting?.image ? (
+                                      <img
+                                        className="h-[40px] rounded-full w-[40px]"
+                                        src={chatting?.image}
+                                        alt=""
+                                      />
+                                    ) : (
+                                      <div className="h-[40px] flex items-center justify-center rounded-full bg-[#5865f2] w-[40px]">
+                                        <SiGuilded
+                                          fontSize={20}
+                                          className="text-white"
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                                <div className="flex items-center gap-2 absolute top-0 ml-[48px]">
+                                  {message.sender === user?._id
+                                    ? user?.userName
+                                    : chatting?.userName}
+                                  <p className={`text-[#929292] text-[13px]`}>
+                                    {moment(message._createdAt).format(
+                                      "MM/DD/YYYY hh:mm a"
+                                    )}
+                                  </p>
+                                </div>
                               </div>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="absolute top-0">
-                            {chatting?.image ? (
-                              <img
-                                className="h-[40px] rounded-full w-[40px]"
-                                src={chatting?.image}
-                                alt=""
-                              />
-                            ) : (
-                              <div className="h-[40px] flex items-center justify-center rounded-full bg-[#5865f2] w-[40px]">
-                                <SiGuilded
-                                  fontSize={20}
-                                  className="text-white"
-                                />
+
+                              <div
+                                className={`text-[16px] text-justify max-w-[50%] mt-6 text-[#dbdee1] font-sans flex flex-col ml-[48px] rounded-md`}
+                              >
+                                {message?.message}
+                                {message?.image && (
+                                  <div className="mt-3 ">
+                                    <div className="">
+                                      {message?.spoiler !== true ? (
+                                        <div className="h-[350px] w-[350px] ">
+                                          <img
+                                            ref={imageRef}
+                                            src={message.image.url}
+                                            className="object-cover  w-[350px] h-[350px] bg-black rounded-md"
+                                            alt=""
+                                          />
+                                        </div>
+                                      ) : (
+                                        <div
+                                          className="h-[350px] w-[350px]  flex items-center justify-center rounded-md"
+                                          style={{
+                                            backgroundImage: `url(${message.image.url})`,
+                                            backgroundSize: "cover",
+                                            backgroundPosition: "center",
+                                            maxHeight: "350px",
+                                            backgroundColor: "black",
+                                            borderRadius: "0.375rem",
+                                          }}
+                                        >
+                                          {message.spoiler === true && (
+                                            <div className="h-full w-full flex items-center justify-center backdrop-blur-3xl rounded-md">
+                                              <button
+                                                onClick={() =>
+                                                  handleSpoilerClick(
+                                                    message._id
+                                                  )
+                                                }
+                                                className="bg-black px-4 p-2 text-xl rounded-full"
+                                              >
+                                                SPOILER
+                                              </button>
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                                {message?.gif && (
+                                  <div className="mt-3 ">
+                                    <div className="h-[350px]">
+                                      <img
+                                        ref={imageRef}
+                                        src={message.gif}
+                                        className="object-cover h-[350px] bg-black rounded-md"
+                                        alt=""
+                                      />
+                                    </div>
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2 absolute top-0 ml-[48px]">
-                          {message.sender === user?._id
-                            ? user?.userName
-                            : chatting?.userName}
-                          <p className={`text-[#929292] text-[13px]`}>
-                            {moment(message._createdAt).format(
-                              "MM/DD/YYYY hh:mm a"
+                            </div>
+                          ))}
+                      </div>
+                    ))}
+                  </div>
+                  <AnimatePresence>
+                    {userprofile && (
+                      <motion.div
+                        className="w-[23%] h-[100vh] top-0 mt-[49px] absolute right-0 bg-[#232428]"
+                        initial="closed"
+                        animate="open"
+                        exit="closed"
+                        variants={sidebarVariants}
+                      >
+                        <div className="relative">
+                          {chatting?.banner ? (
+                            <div
+                              className="w-full h-[120px]"
+                              style={{ backgroundColor: chatting?.banner }}
+                            ></div>
+                          ) : (
+                            <div
+                              className="w-full h-[120px]"
+                              style={{ backgroundColor: "#5d64f4" }}
+                            ></div>
+                          )}
+                          {chatting?.image ? (
+                            <img
+                              src={chatting?.image}
+                              className="h-[100px] w-[100px] rounded-full absolute top-[50%] left-[5%] border-[4px] border-[#232428]"
+                              alt=""
+                            />
+                          ) : (
+                            <div className="bg-[#5865f2]  text-white w-[100px] h-[100px] flex items-center justify-center rounded-full  absolute top-[50%] left-[5%] border-[4px] border-[#232428]">
+                              <SiGuilded fontSize={40} className="mt-2" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="bg-[#111214] rounded-md w-[90%] mx-auto mt-[60px] p-2 text-lg">
+                          <h1 className="mb-3">{chatting?.userId}</h1>
+                          <Divider />
+                          <p className="font-sans text-[12px] mt-3 text-[#b9b9b9] font-bold">
+                            NEXUS MEMBER SINCE
+                          </p>
+                          <p className="text-[12px] mb-3 text-[#ffffff]">
+                            {moment(chatting?._createdAt).format(
+                              "MMM DD, YYYY"
                             )}
                           </p>
+                          <Divider />
+                          <p className="font-sans text-[12px] mt-3 text-[#b9b9b9] font-bold">
+                            NOTE
+                          </p>
+                          <p className="text-[11px] mb-3 text-[#c3c3c3]">
+                            Click to add note
+                          </p>
                         </div>
-                      </div>
-
-                      <div
-                        className={`text-[16px] text-justify max-w-[50%] mt-6 text-[#dbdee1] font-sans flex flex-col ml-[48px] rounded-md`}
-                      >
-                        {message?.message}
-                        {message?.image && (
-                          <div className="mt-3 ">
-                            <div className="">
-                              {message?.spoiler !== true ? (
-                                <div className="h-[350px]">
-                                  <img
-                                    ref={imageRef}
-                                    src={message.image.url}
-                                    className="object-cover h-[350px] bg-black rounded-md"
-                                    alt=""
-                                  />
-                                </div>
-                              ) : (
-                                <div
-                                  className="h-[350px] flex items-center justify-center rounded-md"
-                                  style={{
-                                    backgroundImage: `url(${message.image.url})`,
-                                    backgroundSize: "cover",
-                                    backgroundPosition: "center",
-                                    maxHeight: "350px",
-                                    backgroundColor: "black",
-                                    borderRadius: "0.375rem",
-                                    maxWidth: "50%",
-                                  }}
-                                >
-                                  {message.spoiler === true && (
-                                    <div className="h-full w-full flex items-center justify-center backdrop-blur-3xl rounded-md">
-                                      <button
-                                        onClick={() =>
-                                          handleSpoilerClick(message._id)
-                                        }
-                                        className="bg-black px-4 p-2 text-xl rounded-full"
-                                      >
-                                        SPOILER
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        {message?.gif && (
-                          <div className="mt-3 ">
-                            <div className="h-[350px]">
-                              <img
-                                ref={imageRef}
-                                src={message.gif}
-                                className="object-cover h-[350px] bg-black rounded-md"
-                                alt=""
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              ))}
+              </div>
               <div></div>
             </div>
-            <div className=" mb-16 flex flex-col p-2">
-              <div className="w-[90%] bg-[#383a40] m-auto rounded-t-md">
+            <div
+              className={`${
+                userprofile ? "w-[70%]" : "w-[100%]"
+              } mb-16 flex flex-col p-2`}
+            >
+              <div className={`w-[90%]   bg-[#] bg-none m-auto rounded-t-md`}>
                 {imageAsset ? (
                   <div className="ml-2  p-2 mt-4">
                     <div className="relative max-w-[180px]">
@@ -742,7 +850,11 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
                   ""
                 )}
               </div>
-              <div className="w-[90%] relative m-auto">
+              <div
+                className={`${
+                  userprofile ? "w-[100%]" : "w-[90%]"
+                } relative m-auto`}
+              >
                 <input
                   type="text"
                   value={message}

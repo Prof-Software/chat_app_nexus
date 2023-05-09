@@ -53,12 +53,16 @@ const Private = ({ user, setUser, chatting, setChatting }) => {
         _id,
         status,
         sender->{
+            banner,
+            _createdAt,
           _id,
           userName,
           userId,
           image,
         },
         receiver->{
+          banner,
+          _createdAt,
           _id,
           userName,
           userId,
