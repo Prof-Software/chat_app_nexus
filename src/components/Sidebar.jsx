@@ -4,26 +4,25 @@ import { AiFillCompass, AiOutlinePlus } from "react-icons/ai";
 import Divider from "@mui/material/Divider";
 import { motion } from "framer-motion";
 
-const Sidebar = ({ servers }) => {
-  const [active, setActive] = useState("");
+const Sidebar = ({ servers,page,setPage }) => {
   return (
     <div className="h-full flex flex-col w-[72px] bg-[#1e1f22]">
       <button
         onClick={() => {
-          setActive("home");
+          setPage("home");
         }}
         className="px-3 my-3 flex items-center justify-center relative w-[72px]"
       >
         <div
           className={`${
-            active === "home" ? "bg-[#5865f2]" : "bg-[#393a3d]"
+            page === "home" ? "bg-[#5865f2]" : "bg-[#393a3d]"
           } flex items-center transition-all duration-75 justify-center p-[0.65rem] ${
-            active === "home" ? "rounded-xl" : "rounded-full"
-          } hover:bg-[#5865f2] active:bg-[#4b59c6]`}
+            page === "home" ? "rounded-xl" : "rounded-full"
+          } hover:bg-[#5865f2] page:bg-[#4b59c6]`}
         >
           <SiGuilded fontSize={25} />
         </div>
-        {active === "home" && (
+        {page === "home" && (
           <motion.div
             initial={{ x: "-100%" }}
             animate={{ x: 0 }}
@@ -35,20 +34,20 @@ const Sidebar = ({ servers }) => {
       <div className="w-[50%] mx-auto rounded-full h-[1.4px] bg-[#393a3d]" />
       <button
         onClick={() => {
-          setActive("add");
+          setPage("add");
         }}
         className="px-3 my-2 flex items-center justify-center relative w-[72px]"
       >
         <div
           className={`${
-            active === "add" ? "bg-[#23a559] text-white" : "bg-[#393a3d] text-[#23a559]"
+            page === "add" ? "bg-[#23a559] text-white" : "bg-[#393a3d] text-[#23a559]"
           } flex items-center transition-all duration-75 justify-center p-[0.65rem] ${
-            active === "add" ? "rounded-xl" : "rounded-full"
-          } hover:bg-[#23a559] hover:text-white active:bg-[#23a559]`}
+            page === "add" ? "rounded-xl" : "rounded-full"
+          } hover:bg-[#23a559] hover:text-white page:bg-[#23a559]`}
         >
           <AiOutlinePlus fontSize={25} />
         </div>
-        {active === "add" && (
+        {page === "add" && (
           <motion.div
             initial={{ x: "-100%" }}
             animate={{ x: 0 }}
@@ -59,20 +58,20 @@ const Sidebar = ({ servers }) => {
       </button>
       <button
         onClick={() => {
-          setActive("compass");
+          setPage("compass");
         }}
         className="px-3 my-2 flex items-center justify-center relative w-[72px]"
       >
         <div
           className={`${
-            active === "compass" ? "bg-[#23a559] text-white" : "bg-[#393a3d] text-[#23a559]"
+            page === "compass" ? "bg-[#23a559] text-white" : "bg-[#393a3d] text-[#23a559]"
           } flex items-center transition-all duration-75 justify-center p-[0.65rem] ${
-            active === "compass" ? "rounded-xl" : "rounded-full"
-          } hover:bg-[#23a559] hover:text-white active:bg-[#23a559]`}
+            page === "compass" ? "rounded-xl" : "rounded-full"
+          } hover:bg-[#23a559] hover:text-white page:bg-[#23a559]`}
         >
           <AiFillCompass fontSize={25} />
         </div>
-        {active === "compass" && (
+        {page === "compass" && (
           <motion.div
             initial={{ x: "-100%" }}
             animate={{ x: 0 }}

@@ -30,7 +30,6 @@ const Private = ({ user, setUser, chatting, setChatting }) => {
   const [open, setOpen] = React.useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [color, setColor] = useState(user?.banner);
-  
 
   const handleAnimationComplete = () => {
     setIsAnimating(false);
@@ -99,7 +98,12 @@ const Private = ({ user, setUser, chatting, setChatting }) => {
         </div>
         <Divider />
         <div className="mt-2 px-3">
-          <button onClick={()=>{setChatting(null)}} className="bg-[#404249] p-3 rounded-lg gap-3 flex items-center w-full">
+          <button
+            onClick={() => {
+              setChatting(null);
+            }}
+            className="bg-[#404249] p-3 rounded-lg gap-3 flex items-center w-full"
+          >
             <FaUserFriends fontSize={20} /> Friends
           </button>
         </div>
@@ -115,7 +119,11 @@ const Private = ({ user, setUser, chatting, setChatting }) => {
             <div className=" w-full">
               {friends?.map((friend) => (
                 <div
-                  className=" text-[gray] hover:text-[white] hover:bg-[#ffffff2d] px-3 p-2 cursor-pointer rounded-md"
+                  className={`text-[gray] my-[1px] hover:text-[white] ${
+                    (chatting?._id === friend.receiver._id ||
+                      chatting?._id === friend.sender._id) &&
+                    "bg-[#ffffff2d] text-white"
+                  } hover:bg-[#ffffff0d] px-3 p-2 cursor-pointer rounded-md`}
                   key={friend._id}
                 >
                   {friend.sender.userId === user?.userId ? (
@@ -126,7 +134,11 @@ const Private = ({ user, setUser, chatting, setChatting }) => {
                       className="flex gap-3 items-center"
                     >
                       {friend.receiver.image ? (
-                        <img src={friend.receiver.image} className="w-[30px] h-[30px] rounded-full" alt="" />
+                        <img
+                          src={friend.receiver.image}
+                          className="w-[30px] h-[30px] rounded-full"
+                          alt=""
+                        />
                       ) : (
                         <div className="bg-[#5865f2]  text-white w-[30px] h-[30px] flex items-center justify-center rounded-full">
                           <SiGuilded />
@@ -143,7 +155,11 @@ const Private = ({ user, setUser, chatting, setChatting }) => {
                       className="flex gap-3 items-center"
                     >
                       {friend.sender.image ? (
-                        <img src={friend.sender.image} className="w-[30px] h-[30px] rounded-full" alt="" />
+                        <img
+                          src={friend.sender.image}
+                          className="w-[30px] h-[30px] rounded-full"
+                          alt=""
+                        />
                       ) : (
                         <div className="bg-[#5865f2]  text-white w-[30px] h-[30px] flex items-center justify-center rounded-full">
                           <SiGuilded />

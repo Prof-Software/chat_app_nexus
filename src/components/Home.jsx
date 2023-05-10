@@ -4,9 +4,11 @@ import Sidebar from "./Sidebar";
 import Private from "./Private";
 import {useNavigate} from 'react-router-dom'
 import MainChat from "./MainChat";
+import Compass from "./Compass";
 
 const Home = () => {
   const [user, setUser] = useState({});
+  const [page, setPage] = useState("home") 
   const navigate = useNavigate();
   const [tab, setTab] = useState("add")
   const [chatting, setChatting] = useState()
@@ -28,9 +30,20 @@ const Home = () => {
   }, [navigate]);
   return (
     <div className="h-screen w-screen flex bg-[#313338] text-white">
-      <Sidebar />
+      <Sidebar page={page} setPage={setPage} />
       <Private chatting={chatting} setChatting={setChatting} user={user && user} setUser={setUser}  />
+      {page === "home" &&
+      
       <MainChat chatting={chatting} setChatting={setChatting} user={user && user} tab={tab} setTab={setTab}/>
+      }
+      {page === "add" &&
+      
+      <MainChat chatting={chatting} setChatting={setChatting} user={user && user} tab={tab} setTab={setTab}/>
+      }
+      {page === "compass" &&
+      
+      <Compass user={user && user}/>
+      }
     </div>
   );
 };
