@@ -3,8 +3,9 @@ import { SiGuilded } from "react-icons/si";
 import { AiFillCompass, AiOutlinePlus } from "react-icons/ai";
 import Divider from "@mui/material/Divider";
 import { motion } from "framer-motion";
+import Joined from "./Joined";
 
-const Sidebar = ({ servers,page,setPage }) => {
+const Sidebar = ({ servers, page, setPage, user }) => {
   return (
     <div className="h-full flex flex-col w-[72px] bg-[#1e1f22]">
       <button
@@ -31,7 +32,11 @@ const Sidebar = ({ servers,page,setPage }) => {
           ></motion.div>
         )}
       </button>
-      <div className="w-[50%] mx-auto rounded-full h-[1.4px] bg-[#393a3d]" />
+      {user.joinedServers &&
+        user.joinedServers.map((serverRef) => {
+          return <Joined page={page} setPage={setPage} key={serverRef?._key} serverRef={serverRef} />;
+        })}
+      <div className="w-[50%] mx-auto h-[1.4px] bg-[#393a3d]" />
       <button
         onClick={() => {
           setPage("add");
@@ -40,7 +45,9 @@ const Sidebar = ({ servers,page,setPage }) => {
       >
         <div
           className={`${
-            page === "add" ? "bg-[#23a559] text-white" : "bg-[#393a3d] text-[#23a559]"
+            page === "add"
+              ? "bg-[#23a559] text-white"
+              : "bg-[#393a3d] text-[#23a559]"
           } flex items-center transition-all duration-75 justify-center p-[0.65rem] ${
             page === "add" ? "rounded-xl" : "rounded-full"
           } hover:bg-[#23a559] hover:text-white page:bg-[#23a559]`}
@@ -64,7 +71,9 @@ const Sidebar = ({ servers,page,setPage }) => {
       >
         <div
           className={`${
-            page === "compass" ? "bg-[#23a559] text-white" : "bg-[#393a3d] text-[#23a559]"
+            page === "compass"
+              ? "bg-[#23a559] text-white"
+              : "bg-[#393a3d] text-[#23a559]"
           } flex items-center transition-all duration-75 justify-center p-[0.65rem] ${
             page === "compass" ? "rounded-xl" : "rounded-full"
           } hover:bg-[#23a559] hover:text-white page:bg-[#23a559]`}

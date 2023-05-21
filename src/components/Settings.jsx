@@ -241,7 +241,7 @@ function TabContent({ activeTab, user, setActiveTab, timeElapsed, setUser }) {
       const imageUrl = uploadedImage.url;
 
       client
-        .patch(user._id)
+        .patch(user?._id)
         .set({ image: imageUrl })
         .commit()
         .then((result) => {
@@ -258,7 +258,7 @@ function TabContent({ activeTab, user, setActiveTab, timeElapsed, setUser }) {
         .set({
           cover: {
             _type: "reference",
-            _ref: coverImage._id,
+            _ref: coverImage?._id,
           },
         })
         .commit()

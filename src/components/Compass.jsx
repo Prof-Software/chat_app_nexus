@@ -11,6 +11,7 @@ const Compass = ({ user }) => {
     });
   }, []);
 
+
   return (
     <div className="w-full overflow-auto">
       <div className="relative w-[full] mt-8 flex items-center justify-center">
@@ -25,7 +26,7 @@ const Compass = ({ user }) => {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mx-6 mt-5">
         {/* Create a server card for each server in the array */}
         {servers.map((server) => (
-          <ServerCard key={server._id} server={server} />
+          <ServerCard key={server?._id} user={user} server={server} />
         ))}
       </div>
       <div className="w-full h-[30px]"></div>

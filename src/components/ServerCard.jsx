@@ -1,10 +1,35 @@
 import React from "react";
-import { urlFor } from "../client";
-const ServerCard = ({ server }) => {
+import { client, urlFor } from "../client";
+const ServerCard = ({ server,user }) => {
   const { cover, icon, name, description, members } = server;
+
+  const joinServer = async (serverId) => {
+    try {
+  
+      // Check if the joinedServers field is defined and an array
+      const joinedServers = Array.isArray(user.joinedServers) ? user.joinedServers : [];
+  
+      // Add the server ID to the user's joinedServers array
+      joinedServers.push({ _type: 'reference', _ref: serverId });
+  
+      // Patch/update the user document to save the changes
+      await client
+        .patch(user._id)
+        .set({ joinedServers })
+        .commit();
+  
+      // Refresh the page after successfully joining the server
+      window.location.reload();
+    } catch (error) {
+      console.error('Error joining server:', error);
+    }
+  };
+  
+  
   console.log(server);
+  console.log(user);
   return (
-    <div className="bg-[#232428] relative w-[278px] shadow-black cursor-pointer h-[320px] rounded-md  overflow-hidden transform transition-all hover:shadow-[#2e2b2b] duration-300 hover:-translate-y-1 hover:shadow-md">
+    <div onClick={()=>{joinServer(server?._id)}} className="bg-[#232428] relative w-[278px] shadow-black cursor-pointer h-[320px] rounded-md  overflow-hidden transform transition-all hover:shadow-[#2e2b2b] duration-300 hover:-translate-y-1 hover:shadow-md">
       <div className="relative">
         <img
           src={urlFor(cover.asset._ref)}
@@ -22,10 +47,8 @@ const ServerCard = ({ server }) => {
       <div className="absolute bottom-0 mb-2">
         <div className="text-[12px] flex text-[#adadad] gap-1 ml-5 mr-3">
           {members ? members?.length : "0"}
-          
-          <p>
-          {members?.length > 1 ? "Members" : "member"}
-          </p>
+
+          <p>{members?.length > 1 ? "Members" : "member"}</p>
         </div>
       </div>
     </div>

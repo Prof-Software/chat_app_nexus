@@ -2,16 +2,20 @@ import React, { useState, useEffect } from "react";
 import { client } from "../client";
 import Sidebar from "./Sidebar";
 import Private from "./Private";
-import {useNavigate} from 'react-router-dom'
+import { useNavigate } from "react-router-dom";
 import MainChat from "./MainChat";
 import Compass from "./Compass";
+import ServerChat from "./ServerChat";
 
 const Home = () => {
   const [user, setUser] = useState({});
-  const [page, setPage] = useState("home") 
+  const [page, setPage] = useState("home");
   const navigate = useNavigate();
-  const [tab, setTab] = useState("add")
-  const [chatting, setChatting] = useState()
+  const [tab, setTab] = useState("add");
+  const [chatting, setChatting] = useState();
+  const [channel, setChannel] = useState("")
+  const [serverData, setServerData] = useState(null);
+  const [currentChannel, setCurrentChannel] = useState("general");
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("user"));
     if (!userData) {
@@ -30,20 +34,39 @@ const Home = () => {
   }, [navigate]);
   return (
     <div className="h-screen w-screen flex bg-[#313338] text-white">
-      <Sidebar page={page} setPage={setPage} />
-      <Private chatting={chatting} setChatting={setChatting} user={user && user} setUser={setUser}  />
-      {page === "home" &&
-      
-      <MainChat chatting={chatting} setChatting={setChatting} user={user && user} tab={tab} setTab={setTab}/>
-      }
-      {page === "add" &&
-      
-      <MainChat chatting={chatting} setChatting={setChatting} user={user && user} tab={tab} setTab={setTab}/>
-      }
-      {page === "compass" &&
-      
-      <Compass user={user && user}/>
-      }
+      <Sidebar user={user && user} page={page} setPage={setPage} />
+      <Private
+        currentChannel={currentChannel}
+        setCurrentChannel={setCurrentChannel}
+        page={page}
+        serverData={serverData && serverData}
+        chatting={chatting}
+        setChatting={setChatting}
+        user={user && user}
+        setUser={setUser}
+      />
+      {page === "home" && (
+        <MainChat
+          chatting={chatting}
+          setChatting={setChatting}
+          user={user && user}
+          tab={tab}
+          setTab={setTab}
+        />
+      )}
+      {page === "add" && (
+        <MainChat
+          chatting={chatting}
+          setChatting={setChatting}
+          user={user && user}
+          tab={tab}
+          setTab={setTab}
+        />
+      )}
+      {page === "compass" && <Compass user={user && user} />}
+      {page !== "home" && page !== "add" && page !== "compass" && (
+        <ServerChat currentChannel={currentChannel} serverData={serverData && serverData} setServerData={setServerData} page={page} user={user && user} />
+      )}
     </div>
   );
 };

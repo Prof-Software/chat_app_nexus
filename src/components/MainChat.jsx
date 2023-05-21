@@ -98,7 +98,7 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
   const handleDelete = (messageId) => {
     // Remove the message from the messages state array
     // setMessages((messages) =>
-    //   messages.filter((message) => message._id !== messageId)
+    //   messages.filter((message) => message?._id !== messageId)
     // );
 
     // Send a delete request to the server to remove the message from the backend
@@ -123,7 +123,7 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
   const handleSpoilerClick = (messageId) => {
     setMessages((messages) =>
       messages.map((message) =>
-        message._id === messageId ? { ...message, spoiler: false } : message
+        message?._id === messageId ? { ...message, spoiler: false } : message
       )
     );
     setSpoilerRemoved(true);
@@ -149,7 +149,7 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
   const handleHover = (messageId, isHovered) => {
     setMessages((messages) =>
       messages.map((message) =>
-        message._id === messageId ? { ...message, hover: isHovered } : message
+        message?._id === messageId ? { ...message, hover: isHovered } : message
       )
     );
     setAnchorEl(false);
@@ -356,10 +356,10 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
 
   const cancelFriendRequest = (request) => {
     client
-      .delete(request._id)
+      .delete(request?._id)
       .then(() => {
         // Remove the request from the pendingRequests array
-        setFriendRequests(friendRequests.filter((r) => r._id !== request._id));
+        setFriendRequests(friendRequests.filter((r) => r?._id !== request?._id));
         // Show a success message
         setSnackbarMessage("Friend request canceled");
         setSnackbarSeverity("success");
@@ -383,7 +383,7 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
       setSnackbarOpen(true);
       // Update the friend requests state to remove the accepted request
       setFriendRequests((prevRequests) =>
-        prevRequests.filter((request) => request._id !== requestId)
+        prevRequests.filter((request) => request?._id !== requestId)
       );
 
       // Add the accepted friend to the friends state
@@ -413,11 +413,11 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
             _type: "friendRequest",
             sender: {
               _type: "reference",
-              _ref: user._id, // Reference to the current user document
+              _ref: user?._id, // Reference to the current user document
             },
             receiver: {
               _type: "reference",
-              _ref: receiver._id, // Reference to the receiver user document
+              _ref: receiver?._id, // Reference to the receiver user document
             },
             status: "pending",
             sentAt: new Date().toISOString(),
@@ -551,10 +551,10 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
                               } py-4 flex flex-col bg-[#313338] pl-4 hover:bg-[#2e3035] relative `}
                               key={index}
                               onMouseEnter={() =>
-                                handleHover(message._id, true)
+                                handleHover(message?._id, true)
                               }
                               onMouseLeave={() =>
-                                handleHover(message._id, false)
+                                handleHover(message?._id, false)
                               }
                             >
                               <div className="flex relative ">
@@ -582,7 +582,7 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
                                         <MenuItem
                                           className="text-[red]"
                                           onClick={() => {
-                                            handleDelete(message._id);
+                                            handleDelete(message?._id);
                                           }}
                                         >
                                           Delete Message
@@ -678,7 +678,7 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
                                               <button
                                                 onClick={() =>
                                                   handleSpoilerClick(
-                                                    message._id
+                                                    message?._id
                                                   )
                                                 }
                                                 className="bg-black px-4 p-2 text-xl rounded-full"
@@ -1069,7 +1069,7 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
                       <Divider />
                       <div className="">
                         {friends?.map((friend) => (
-                          <div key={friend._id}>
+                          <div key={friend?._id}>
                             {friend.receiver.userId === user?.userId ? (
                               <div className="flex items-center gap-4 justify-between hover:bg-[#ffffff2e] py-2 px-4 rounded-lg">
                                 <div className="flex items-center gap-4">
@@ -1166,7 +1166,7 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
                       <Divider />
                       <div className="mt-3">
                         {friendRequests.map((request) => (
-                          <div key={request._id}>
+                          <div key={request?._id}>
                             {request?.sender && (
                               <div className="flex items-center gap-4 justify-between hover:bg-[#ffffff2e] py-2 px-4 rounded-lg">
                                 <div className="flex items-center gap-4">
@@ -1189,7 +1189,7 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
                                   </button>
                                   <button
                                     onClick={() =>
-                                      acceptFriendRequest(request._id)
+                                      acceptFriendRequest(request?._id)
                                     }
                                     className="bg-[#1b1b1b] p-1 rounded-full hover:bg-[#1b1b1b76]"
                                   >
