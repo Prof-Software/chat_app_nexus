@@ -15,6 +15,14 @@ const ServerChat = ({
   const [messages, setMessages] = useState([]);
   const [senders, setSenders] = useState({});
   const messagesEndRef = useRef(null);
+  const [selectedImages, setSelectedImages] = useState([]);
+
+  const handleImageChange = (event) => {
+    const files = event.target.files; // Get the selected files
+    const images = Array.from(files); // Convert FileList to array
+
+    setSelectedImages(images);
+  };
   const scrollToBottom = () => {
     const parentContainer = messagesEndRef.current?.closest(".overflow-auto");
     const lastChild = parentContainer?.lastElementChild;
@@ -118,18 +126,35 @@ const ServerChat = ({
 
   const handleSendMessage = async () => {
     try {
+      const uploadedImages = await Promise.all(
+        selectedImages.map((image) =>
+          client.assets.upload("image", image, {
+            contentType: image.type,
+            filename: image.name,
+          })
+        )
+      );
+      console.log(uploadedImages);
       const newServerMessage = {
         _type: "serverMessage",
         server: serverData?._id,
         channel: currentChannel,
         sender: user?._id,
         message: message,
+        images: uploadedImages.map((image) => ({
+          _type: "image",
+          asset: {
+            _type: "reference",
+            _ref: image._id,
+          },
+        })),
         timestamp: new Date().toISOString(),
       };
 
       await client.create(newServerMessage);
 
       setMessage("");
+      setSelectedImages([]);
     } catch (error) {
       console.error("Error creating serverMessage:", error);
     }
@@ -138,7 +163,7 @@ const ServerChat = ({
   return (
     <div className="relative w-full">
       <Divider />
-      <div className="h-[92%] flex flex-col w-full overflow-scroll"  >
+      <div className="h-[92%] flex flex-col w-full overflow-scroll">
         <div className="flex flex-col">
           <div className="ml-5 flex flex-col gap-4 items-center justify-center w-[95%] h-[80vh] text-center">
             <h1 className="text-4xl font-sans font-bold">
@@ -205,6 +230,18 @@ const ServerChat = ({
                       </span>
                     </div>
                     <p className="text-[#d6d6d6] text-sm">{message.message}</p>
+                    <div className="flex flex-wrap w-[60%] gap-4 mt-3">
+
+                    {message?.images?.map((image, index) => (
+                      <img
+                      className="object-cover rounded-md"
+                        key={index}
+                        src={urlFor(image.asset._ref)}
+                        alt={image.alt}
+                      />
+                    ))}
+                    </div>
+
                   </div>
                 </div>
               </React.Fragment>
@@ -213,10 +250,21 @@ const ServerChat = ({
         </div>
       </div>
       <div className="flex absolute bottom-0 left-0 w-full">
+        <div className="absolute bottom-0 flex left-0 mb-[80px] mr-[45px] rounded flex-wrap bg-[#00000057] p-2 gap-3 ml-[63px]">
+          {selectedImages.map((image, index) => (
+            <div key={index} className="flex gap-4">
+              <img
+                className="h-[160px] rounded-md"
+                src={URL.createObjectURL(image)}
+                alt={`Image ${index + 1}`}
+              />
+            </div>
+          ))}
+        </div>
         <input
           type="text"
           value={message}
-          className="w-[90%] mx-auto mb-4 bg-[#383a40] pl-12 outline-none p-3 text-lg h-full rounded-md"
+          className="w-[90%] mx-auto shadow-md mb-4 bg-[#383a40] pl-12 outline-none p-3 text-lg h-full rounded-md"
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={(e) => {
             if (e.keyCode === 13) {
@@ -233,6 +281,7 @@ const ServerChat = ({
             name="upload-image"
             className="hidden"
             id="file-input"
+            onChange={handleImageChange}
           />
           <label htmlFor="file-input">
             <AiOutlinePlus />
