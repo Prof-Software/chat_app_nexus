@@ -18,6 +18,10 @@ body {
 .relative {
   position: relative;
 }
+.image-container {
+  display: flex;
+  flex-wrap: wrap;
+}
 
 .img::before {
   content: "bruh";

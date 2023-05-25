@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import MainChat from "./MainChat";
 import Compass from "./Compass";
 import ServerChat from "./ServerChat";
+import CreateServer from "./CreateServer";
 
 const Home = () => {
   const [user, setUser] = useState({});
@@ -55,7 +56,7 @@ const Home = () => {
         />
       )}
       {page === "add" && (
-        <MainChat
+        <CreateServer
           chatting={chatting}
           setChatting={setChatting}
           user={user && user}

@@ -3,7 +3,9 @@ import { client, urlFor } from "../client";
 import { Divider } from "@mui/material";
 import { AiOutlinePlus } from "react-icons/ai";
 import moment from "moment";
-
+import Hash from "../assets/Hash";
+import Masonry from "react-masonry-css";
+import { SiGuilded, SiNuke } from "react-icons/si";
 const ServerChat = ({
   page,
   serverData,
@@ -19,10 +21,12 @@ const ServerChat = ({
 
   const handleImageChange = (event) => {
     const files = event.target.files; // Get the selected files
-    const images = Array.from(files); // Convert FileList to array
-
+    const images = Array.from(files).slice(0, 6); // Limit to maximum 6 images
+  
     setSelectedImages(images);
   };
+  
+  
   const scrollToBottom = () => {
     const parentContainer = messagesEndRef.current?.closest(".overflow-auto");
     const lastChild = parentContainer?.lastElementChild;
@@ -123,7 +127,19 @@ const ServerChat = ({
   });
 
   let currentDate = null;
-
+  const getImageWidth = (totalImages,index) => {
+    if (totalImages === 1) {
+      return "w-[100%] h-[316px]";
+    } else if (totalImages === 2) {
+      return "[48%] h-[316px]";
+    } else if (totalImages === 4) {
+      return index < 3 ? "w-[31%] h-[130px]" : "w-[100%] h-[316px]";
+    } else if (totalImages === 5 || totalImages === 6) {
+      return index < 3 ? "w-[31%] h-[130px]" : "w-[48%] h-[316px]";
+    } else {
+      return "w-[31%] h-[130px]";
+    }
+  };
   const handleSendMessage = async () => {
     try {
       const uploadedImages = await Promise.all(
@@ -162,8 +178,16 @@ const ServerChat = ({
 
   return (
     <div className="relative w-full">
+      <div className="h-[48px] flex items-center px-3">
+        <div className="flex gap-2 items-center">
+          <div className="text-[gray]">
+            <Hash />
+          </div>
+          {serverData?.name}
+        </div>
+      </div>
       <Divider />
-      <div className="h-[92%] flex flex-col w-full overflow-scroll">
+      <div className="h-[87%] flex flex-col w-full overflow-scroll">
         <div className="flex flex-col">
           <div className="ml-5 flex flex-col gap-4 items-center justify-center w-[95%] h-[80vh] text-center">
             <h1 className="text-4xl font-sans font-bold">
@@ -215,9 +239,11 @@ const ServerChat = ({
                       />
                     ) : (
                       <div
-                        className="h-[40px] w-[40px] rounded-full bg-black"
+                        className="h-[40px] flex items-center justify-center w-[40px] rounded-full bg-[#5865f2]"
                         alt="Sender"
-                      />
+                      >
+                        <SiGuilded className="mt-[2px]" fontSize={20}/>
+                      </div>
                     )}
                   </div>
                   <div className="flex flex-col ml-3">
@@ -230,18 +256,17 @@ const ServerChat = ({
                       </span>
                     </div>
                     <p className="text-[#d6d6d6] text-sm">{message.message}</p>
-                    <div className="flex flex-wrap w-[60%] gap-4 mt-3">
-
-                    {message?.images?.map((image, index) => (
-                      <img
-                      className="object-cover rounded-md"
-                        key={index}
-                        src={urlFor(image.asset._ref)}
-                        alt={image.alt}
-                      />
-                    ))}
+                    <div className={`image-container w-[60%] gap-3 mt-3`}>
+                      {message?.images?.map((image, index) => (
+                        <img
+                          className="object-cover rounded-md h-[160px]"
+                          
+                          key={index}
+                          src={urlFor(image.asset._ref)}
+                          alt={image.alt}
+                        />
+                      ))}
                     </div>
-
                   </div>
                 </div>
               </React.Fragment>
