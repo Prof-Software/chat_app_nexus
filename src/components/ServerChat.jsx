@@ -6,6 +6,9 @@ import moment from "moment";
 import Hash from "../assets/Hash";
 import Masonry from "react-masonry-css";
 import { SiGuilded, SiNuke } from "react-icons/si";
+import { MdAddReaction } from "react-icons/md";
+import { BsFillReplyFill } from "react-icons/bs";
+import { FiMoreHorizontal } from "react-icons/fi";
 const ServerChat = ({
   page,
   serverData,
@@ -18,15 +21,26 @@ const ServerChat = ({
   const [senders, setSenders] = useState({});
   const messagesEndRef = useRef(null);
   const [selectedImages, setSelectedImages] = useState([]);
+  const [hover, setHover] = useState(false);
+  const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handleImageChange = (event) => {
     const files = event.target.files; // Get the selected files
     const images = Array.from(files).slice(0, 6); // Limit to maximum 6 images
-  
+
     setSelectedImages(images);
   };
-  
-  
+
+  const handleHover = (messageId, isHovered) => {
+    setMessages((messages) =>
+      messages.map((message) =>
+        message?._id === messageId ? { ...message, hover: isHovered } : message
+      )
+    );
+    setAnchorEl(false);
+    setHover(true);
+  };
+
   const scrollToBottom = () => {
     const parentContainer = messagesEndRef.current?.closest(".overflow-auto");
     const lastChild = parentContainer?.lastElementChild;
@@ -127,7 +141,7 @@ const ServerChat = ({
   });
 
   let currentDate = null;
-  const getImageWidth = (totalImages,index) => {
+  const getImageWidth = (totalImages, index) => {
     if (totalImages === 1) {
       return "w-[100%] h-[316px]";
     } else if (totalImages === 2) {
@@ -187,7 +201,10 @@ const ServerChat = ({
         </div>
       </div>
       <Divider />
-      <div className="h-[87%] flex flex-col w-full overflow-scroll">
+      <div
+        ref={messagesEndRef}
+        className="h-[84%] flex flex-col w-full overflow-auto"
+      >
         <div className="flex flex-col">
           <div className="ml-5 flex flex-col gap-4 items-center justify-center w-[95%] h-[80vh] text-center">
             <h1 className="text-4xl font-sans font-bold">
@@ -206,7 +223,7 @@ const ServerChat = ({
             <button className="w-[400px] h-[80px] rounded-md bg-[#232428] hover:bg-[#bcbec57c] transition-all duration-300"></button>
           </div>
         </div>
-        <div className="flex flex-col" ref={messagesEndRef}>
+        <div className="flex flex-col">
           {filteredMessages.map((message) => {
             const messageDate = moment(message.timestamp).format("MMM DD");
 
@@ -227,7 +244,24 @@ const ServerChat = ({
             return (
               <React.Fragment key={message._id}>
                 {renderDateHeader}
-                <div className="flex my-3 ml-5">
+                <div
+                  className="flex my-3 ml-5"
+                  onMouseEnter={() => handleHover(message?._id, true)}
+                  onMouseLeave={() => handleHover(message?._id, false)}
+                >
+                  {message.hover && (
+                    <div className="absolute top-[-25px] rounded-sm border border-[#1c1d20] right-[10%] bg-[#303237]">
+                      <button className=" p-1 px-3 text-[gray] hover:bg-[#ffffff18] hover:text-white">
+                        <MdAddReaction fontSize={25} />
+                      </button>
+                      <button className=" p-1 px-3 text-[gray] hover:bg-[#ffffff18] hover:text-white">
+                        <BsFillReplyFill fontSize={25} />
+                      </button>
+                      <button className=" p-1 px-3 text-[gray] hover:bg-[#ffffff18] hover:text-white">
+                        <FiMoreHorizontal fontSize={25} />
+                      </button>
+                    </div>
+                  )}
                   <div className="h-[40px] gap-3">
                     {senders[message.sender]?.image ? (
                       <img
@@ -242,7 +276,7 @@ const ServerChat = ({
                         className="h-[40px] flex items-center justify-center w-[40px] rounded-full bg-[#5865f2]"
                         alt="Sender"
                       >
-                        <SiGuilded className="mt-[2px]" fontSize={20}/>
+                        <SiGuilded className="mt-[2px]" fontSize={20} />
                       </div>
                     )}
                   </div>
@@ -260,7 +294,6 @@ const ServerChat = ({
                       {message?.images?.map((image, index) => (
                         <img
                           className="object-cover rounded-md h-[160px]"
-                          
                           key={index}
                           src={urlFor(image.asset._ref)}
                           alt={image.alt}
