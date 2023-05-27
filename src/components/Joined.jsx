@@ -10,9 +10,7 @@ function Joined({ serverRef, page, setPage }) {
         `*[_id == $serverId][0]{
           name,
           _id,
-          icon {
-            asset->{url}
-          }
+          icon
         }`,
         { serverId: serverRef._ref }
       )
@@ -34,12 +32,13 @@ function Joined({ serverRef, page, setPage }) {
         setPage(serverData?._id);
       }}
     >
+      {console.log(serverData)}
       <img
         className={`w-[48px] h-[45.800px] object-cover ${
           page === serverData?._id ? "rounded" : "rounded-full"
         } hover:rounded transition-all`}
-        src={urlFor(serverData.icon.asset.url).height(150).width(150).url()}
-        alt={`${serverData.name} icon`}
+        src={urlFor(serverData?.icon?.url).height(150).width(150).url()}
+        alt={`${serverData?.name} icon`}
       />
     </div>
   );

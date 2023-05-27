@@ -32,7 +32,7 @@ import At from "../assets/At";
 import { format, isToday, isYesterday } from "date-fns";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-
+import wupmus from '../assets/wupmus.svg'
 // Define some variants for the motion animation
 const sidebarVariants = {
   open: {
@@ -1035,7 +1035,10 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
                   </div>
                 </div>
                 <Divider />
-                <div></div>
+                <div className="w-full flex flex-col h-full items-center justify-center">
+                    <img src={wupmus} alt="" />
+                    <p className="text-[gray] mt-8 mb-16">Bluno is waiting on friends. You don't have to though!</p>
+                </div>
               </div>
             )}
             {tab === "all" && (

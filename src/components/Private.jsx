@@ -42,6 +42,18 @@ const Private = ({
   const [open, setOpen] = React.useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [color, setColor] = useState(user?.banner);
+  const [channels, setChannels] = useState([]);
+  useEffect(() => {
+    if (serverData) {
+      // Fetch channels that refer to the _id of serverData._id
+      client
+        .fetch(
+          `*[_type == "channel" && references('${serverData._id}')]`
+        )
+        .then((data) => setChannels(data))
+        .catch(console.error);
+    }
+  }, [serverData]);
 
   const handleAnimationComplete = () => {
     setIsAnimating(false);
@@ -57,6 +69,7 @@ const Private = ({
   const handleClickOpen = () => {
     setOpen(true);
   };
+  console.log(channels)
 
   useEffect(() => {
     const fetchFriends = async () => {
@@ -357,7 +370,7 @@ const Private = ({
             <BsChevronDown fontSize={7} className="text-[#9a9999] font-bold" />
             <p className="font-sans font-bold text-[#9a9999] text-[10px]">TEXT CHANNELS</p>
             </div>
-            <ChannelsList currentChannel={currentChannel} setCurrentChannel={setCurrentChannel} channels={serverData?.channels} />
+            <ChannelsList currentChannel={currentChannel} setCurrentChannel={setCurrentChannel} channels={channels&&channels} />
           </div>
           <div className="bg-[#232428] h-[52px] w-full justify-between py-2 flex">
           <div

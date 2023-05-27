@@ -9,7 +9,7 @@ import ServerChat from "./ServerChat";
 import CreateServer from "./CreateServer";
 
 const Home = () => {
-  const [user, setUser] = useState({});
+  const [user, setUser] = useState([]);
   const [page, setPage] = useState("home");
   const navigate = useNavigate();
   const [tab, setTab] = useState("add");
@@ -35,7 +35,7 @@ const Home = () => {
   }, [navigate]);
   return (
     <div className="h-screen w-screen flex bg-[#313338] text-white">
-      <Sidebar user={user && user} page={page} setPage={setPage} />
+      <Sidebar user={user && user} setUser={setUser} page={page} setPage={setPage} />
       <Private
         currentChannel={currentChannel}
         setCurrentChannel={setCurrentChannel}

@@ -9,6 +9,7 @@ import { SiGuilded, SiNuke } from "react-icons/si";
 import { MdAddReaction } from "react-icons/md";
 import { BsFillReplyFill } from "react-icons/bs";
 import { FiMoreHorizontal } from "react-icons/fi";
+import notif from '../assets/notif.mp3'
 const ServerChat = ({
   page,
   serverData,
@@ -92,6 +93,8 @@ const ServerChat = ({
           // A new message has been added or updated
           const newMessage = update?.result;
           setMessages((prevMessages) => [...prevMessages, newMessage]);
+          const audio = new Audio(notif);
+          audio.play();
         } else if (update?.transition === "disappear") {
           // A message has been deleted
           const deletedMessageId = update?.documentId;

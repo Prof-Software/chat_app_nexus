@@ -24,6 +24,7 @@ const ServerCard = ({ server,user }) => {
       console.error('Error joining server:', error);
     }
   };
+  console.log(icon?.asset?.url)
   
   
   console.log(server);
@@ -31,13 +32,20 @@ const ServerCard = ({ server,user }) => {
   return (
     <div onClick={()=>{joinServer(server?._id)}} className="bg-[#232428] relative w-[278px] shadow-black cursor-pointer h-[320px] rounded-md  overflow-hidden transform transition-all hover:shadow-[#2e2b2b] duration-300 hover:-translate-y-1 hover:shadow-md">
       <div className="relative">
+        {
+          cover ?
+          <img
+            src={urlFor(cover?.asset?._ref)}
+            className="w-full rounded-t-md  h-[143px]"
+            alt=""
+          />
+          :
+          <div className="w-full rounded-t-md  h-[143px] bg-black">
+
+          </div>
+        }
         <img
-          src={urlFor(cover.asset._ref)}
-          className="w-full rounded-t-md  h-[143px]"
-          alt=""
-        />
-        <img
-          src={urlFor(icon.asset._ref).height(120).width(120)}
+          src={urlFor(icon?.url).height(120).width(120)}
           className="rounded-t-md absolute border-[4px] rounded-md top-[83%] left-[7%] border-[#232428] w-[50px] h-[50px]"
           alt=""
         />
