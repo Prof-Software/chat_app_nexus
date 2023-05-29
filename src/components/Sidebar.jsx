@@ -74,6 +74,7 @@ const Sidebar = ({ servers, page, setPage, user,setUser }) => {
         _id: serverId,
         _type: 'server',
         name: value,
+        owner: user?._id,
         icon: serverIcon,
       });
   

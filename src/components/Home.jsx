@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import MainChat from "./MainChat";
 import Compass from "./Compass";
 import ServerChat from "./ServerChat";
-import CreateServer from "./CreateServer";
+import Loading from "./Loading";
 
 const Home = () => {
   const [user, setUser] = useState([]);
@@ -17,22 +17,31 @@ const Home = () => {
   const [channel, setChannel] = useState("")
   const [serverData, setServerData] = useState(null);
   const [currentChannel, setCurrentChannel] = useState("general");
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("user"));
     if (!userData) {
       navigate("/login"); // redirect to login if user data is not available
     } else {
       const { userId } = userData;
+      setIsLoading(true); // Set loading state to true
       client
         .fetch(`*[_type == "user" && userId == "${userId}"]`)
         .then((data) => {
           if (data.length > 0) {
             setUser(data[0]);
           }
+          setIsLoading(false); // Set loading state to false once data is fetched
         })
         .catch((error) => console.error(error));
     }
   }, [navigate]);
+
+  if (isLoading) {
+    return <Loading />; // Render loading component while fetching user data
+  }
+
   return (
     <div className="h-screen w-screen flex bg-[#313338] text-white">
       <Sidebar user={user && user} setUser={setUser} page={page} setPage={setPage} />
@@ -48,15 +57,6 @@ const Home = () => {
       />
       {page === "home" && (
         <MainChat
-          chatting={chatting}
-          setChatting={setChatting}
-          user={user && user}
-          tab={tab}
-          setTab={setTab}
-        />
-      )}
-      {page === "add" && (
-        <CreateServer
           chatting={chatting}
           setChatting={setChatting}
           user={user && user}

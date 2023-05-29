@@ -4,6 +4,8 @@
 html,
 body {
   height: 100%;
+  background: #26262e;
+  cursor: default;
 }
 
 body {

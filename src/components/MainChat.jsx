@@ -280,11 +280,19 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
           image,
         }
       }`;
-      const acceptedRequests = await client.fetch(query);
-      setFriends(acceptedRequests);
+  
+      const listener = client.listen(query).subscribe(updatedRequests => {
+        setFriends(updatedRequests);
+      });
+  
+      return () => {
+        listener.unsubscribe(); // Clean up the listener when the component unmounts
+      };
     };
+  
     fetchFriends();
   }, [user?._id]);
+  
 
   const handleOnline = () => {};
   const handleAll = () => {
@@ -1071,7 +1079,7 @@ const MainChat = ({ user, tab, setTab, chatting }) => {
 
                       <Divider />
                       <div className="">
-                        {friends?.map((friend) => (
+                        {friends && friends?.map((friend) => (
                           <div key={friend?._id}>
                             {friend.receiver.userId === user?.userId ? (
                               <div className="flex items-center gap-4 justify-between hover:bg-[#ffffff2e] py-2 px-4 rounded-lg">

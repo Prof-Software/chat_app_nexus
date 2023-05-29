@@ -69,8 +69,7 @@ const Private = ({
   const handleClickOpen = () => {
     setOpen(true);
   };
-  console.log(channels)
-
+  
   useEffect(() => {
     const fetchFriends = async () => {
       const query = `*[_type == "friendRequest" && (sender._ref == "${user?._id}" || receiver._ref == "${user?._id}") && status == "accepted"] {
